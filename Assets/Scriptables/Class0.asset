@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27630b9dd8e8cab48baf498ebbcb6216, type: 3}
+  m_Name: Class0
+  m_EditorClassIdentifier: 
+  className: Ogre
+  classDescription: 'This is the description of the Ogre class.
+
+
+    This will talk
+    about its passives, as well as describe a thematic overview of the class.
+
+
+    It
+    will also generate the class tokens, which can be hovered for a description.'
