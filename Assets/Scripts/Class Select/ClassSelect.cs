@@ -13,13 +13,14 @@ public class ClassSelect : MonoBehaviour
     [SerializeField] private float idleScrollVel = 1.5f;
     [SerializeField] private float selectedScrollVel = 3f;
     [SerializeField] private Vector3 generationOffset = Vector3.down * 0.5f;
+
     private float setupTimer = 0f;
     private float currentScroll = 0f;
     private float currentScrollVel = 0f;
-    private int selectedIndex = -1;
-    private bool isActive = false;
-    private bool isSetup = false;
-    private bool hasInteracted = false;
+    public int selectedIndex { get; private set; } = -1;
+    public bool isActive { get; private set; } = false;
+    public bool isSetup { get; private set; } = false;
+    public bool hasInteracted { get; private set; } = false;
 
 
     private void Awake() => SetActive(false);
@@ -147,40 +148,20 @@ public class ClassSelect : MonoBehaviour
     #endregion
 
 
-    #region Setters / Getters
-
     public void SetActive(bool isActive_)
     {
-        // Set variables
-        if (isActive_ && !isActive)
-        {
-            setupTimer = 0f;
-            currentScroll = 0f;
-            selectedIndex = -1;
-            isSetup = false;
-            hasInteracted = false;
-            foreach (ClassSelectOption option in options) option.SetActive(false);
-        }
-        
-        else if (!isActive_ && isActive)
-        {
-            setupTimer = 0f;
-            currentScroll = 0f;
-            selectedIndex = -1;
-            isSetup = false;
-            hasInteracted = false;
-            foreach (ClassSelectOption option in options) option.SetActive(false);
-        }
+        if (isActive_ == isActive) return;
 
         // Update isActive
+        setupTimer = 0f;
+        currentScroll = 0f;
+        selectedIndex = -1;
+        isSetup = false;
+        hasInteracted = false;
+        foreach (ClassSelectOption option in options) option.SetActive(false);
         isActive = isActive_;
     }
 
 
-    public int GetSelectedIndex() => selectedIndex;
     public ClassSelectOption GetSelectedOption() => (selectedIndex == -1) ? null : options[selectedIndex];
-    public bool GetHasInteracted() => hasInteracted;
-    public bool GetSetup() => isSetup;
-
-    #endregion
 }

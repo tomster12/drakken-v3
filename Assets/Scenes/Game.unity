@@ -441,7 +441,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a81b040582567204fb8bd8fc1cdf0cf3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  appManager: {fileID: 1830773396}
   cameraController: {fileID: 963194229}
   fire: {fileID: 1580701664}
   potentialTokens:
@@ -1656,9 +1655,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5cda31973d217074cae642e14eb327c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  appManager: {fileID: 1830773396}
-  cameraController: {fileID: 963194229}
+  multiplayerManager: {fileID: 1830773396}
   gameManager: {fileID: 305103077}
+  cameraController: {fileID: 963194229}
   classSelect: {fileID: 1470738962}
   fire: {fileID: 1580701664}
   animator: {fileID: 1627112604}
@@ -3031,6 +3030,7 @@ GameObject:
   - component: {fileID: 1830773397}
   - component: {fileID: 1830773398}
   - component: {fileID: 1830773396}
+  - component: {fileID: 1830773400}
   m_Layer: 0
   m_Name: App
   m_TagString: Untagged
@@ -3051,12 +3051,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   networkManager: {fileID: 1830773398}
-  gameManager: {fileID: 305103077}
   clientParent: {fileID: 1723045141}
-  book: {fileID: 1044330247}
   matchmakerPrefab: {fileID: 8380299449303793251, guid: dc71ae9a555de6c4180fecf3760c5871,
     type: 3}
-  hostServer: 0
+  _isServer: 0
 --- !u!114 &1830773397
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3137,6 +3135,20 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1830773400
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1830773395}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e82792043ef53e49b7bb9a9ec7bdf8b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  multiplayerManager: {fileID: 1830773396}
+  book: {fileID: 1044330247}
 --- !u!1 &1831287513
 GameObject:
   m_ObjectHideFlags: 0

@@ -7,9 +7,10 @@ using Unity.Netcode;
 [Serializable]
 public class Match : NetworkBehaviour
 {
-    // Declare variables
     public static Match instance;
-    public static Action instanceInitialized;
+    public static Action OnSpawn;
+
+    [SerializeField] private NetworkObject net;
 
     [SerializeField] private ulong clientId1, clientId2; // Temporary serialize to show
 
@@ -18,7 +19,7 @@ public class Match : NetworkBehaviour
     {
         // Singleton handle
         instance = this;
-        if (instanceInitialized != null) instanceInitialized();
+        if (OnSpawn != null) OnSpawn();
     }
 
 
@@ -33,6 +34,7 @@ public class Match : NetworkBehaviour
         clientId2 = clientId2_;
     }
 
+
     public bool ContainsClient_Serverside(ulong clientId)
     {
         // Check if Match contains a client
@@ -45,7 +47,9 @@ public class Match : NetworkBehaviour
         if (!IsServer) return;
 
         // Close match
-        Close_ClientRpc();
+        Debug.Log("MS: Closing match");
+        CloseMatch_ClientRpc();
+        net.Despawn();
     }
 
     #endregion
@@ -53,19 +57,21 @@ public class Match : NetworkBehaviour
 
     #region Client
 
+    [ClientRpc]
+    public void CloseMatch_ClientRpc()
+    {
+        // Remove this match from existence
+        Debug.Log("M: Closing match");
+        instance = null;
+        OnSpawn = null;
+        Matchmaker.instance.OnCloseMatch();
+    }
+
+
     public void ReadyUp(Action callback)
     {
         // Pretend immediately ready
         callback();
-    }
-
-
-    [ClientRpc]
-    public void Close_ClientRpc()
-    {
-        // Match forcibly closed
-        Debug.Log("Match forcibly closed.");
-        AppManager.instance.Disconnect();
     }
 
     #endregion

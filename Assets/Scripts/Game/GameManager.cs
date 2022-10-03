@@ -8,8 +8,9 @@ using System.Collections;
 public class GameManager : MonoBehaviour
 {
     // Declare variables
+    public static GameManager instance;
+
     [Header("References")]
-    [SerializeField] private AppManager appManager;
     [SerializeField] private CameraController cameraController;
     [SerializeField] private Fire fire;
 
@@ -27,6 +28,14 @@ public class GameManager : MonoBehaviour
     private int diceValueTotal;
 
 
+    private void Awake()
+    {
+        // Singleton handling
+        if (instance != null) return;
+        instance = this;
+    }
+
+
     public void StartGame(ClassData currentClass_, Book.BookStateIngame ingameBook_)
     {
         // Update variables
@@ -35,7 +44,7 @@ public class GameManager : MonoBehaviour
         ingameBook = ingameBook_;
 
         // Ready up
-        match.ReadyUp(LoadGame);
+        Match.instance.ReadyUp(LoadGame);
     }
 
     public void StopGame()

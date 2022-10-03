@@ -5,6 +5,8 @@ using UnityEngine;
 public class CameraController : MonoBehaviour
 {
     // Declare variables
+    public static CameraController instance;
+
     [Header("References")]
     [SerializeField] private Camera cam;
     [SerializeField] private Transform defaultView;
@@ -19,6 +21,10 @@ public class CameraController : MonoBehaviour
 
     private void Awake()
     {
+        // Singleton handling
+        if (instance != null) return;
+        instance = this;
+
         // Set to default view
         SetView("Default");
         transform.position = currentView.position;

@@ -6,20 +6,26 @@ using UnityEngine;
 
 public class Book : MonoBehaviour
 {
-    // Declare variables
     [Header("References")]
-    [SerializeField] private AppManager appManager;
-    [SerializeField] private CameraController cameraController;
+    [SerializeField] private MultiplayerManager multiplayerManager;
     [SerializeField] private GameManager gameManager;
+    [SerializeField] private CameraController cameraController;
     [SerializeField] private ClassSelect classSelect;
     [SerializeField] private Fire fire;
 
     [SerializeField] private Animator animator;
     [SerializeReference] private BookState bookState;
-    private bool isHovered;
-    private bool toOpen;
-    private bool isOpen;
-    private bool overrideToOpen;
+    public bool isHovered { get; private set; }
+    public bool toOpen { get; private set; }
+    public bool isOpen { get; private set; }
+
+
+    private void Awake()
+    {
+        // Add event listeners
+        MultiplayerManager.OnDisconnect += OnDisconnect;
+        Matchmaker.OnLeaveMatch += OnLeaveMatch;
+    }
 
 
     private void Update()
@@ -30,15 +36,12 @@ public class Book : MonoBehaviour
         SetContentTitle("");
         SetContentDescription("");
 
-        animator.SetBool("isOpen", toOpen || overrideToOpen);
-        isOpen = (toOpen || overrideToOpen) && animator.GetCurrentAnimatorStateInfo(0).IsName("Open");
+        animator.SetBool("isOpen", toOpen);
+        isOpen = toOpen && animator.GetCurrentAnimatorStateInfo(0).IsName("Open");
 
         // Update functions
         bookState.Update();
         UpdateUI();
-
-        // Reset override
-        overrideToOpen = false;
     }
 
 
@@ -49,15 +52,19 @@ public class Book : MonoBehaviour
         protected Book book;
 
         public BookState(Book book_) { book = book_; }
-        
+
+        virtual public void Set() { }
+        virtual public void Unset() { }
+
         abstract public void Update();
-        abstract public void OnDisconnect();
+
+        virtual public void OnDisconnect() { }
+        virtual public void OnLeaveMatch() { }
     }
 
 
-    public class BookStateUnopened : BookState
+    public class BookStateMatchmaker : BookState
     {
-        // Declare variables
         [Header("Config")]
         [SerializeField] private Vector3 basePos = new Vector3(0f, 5.2f, 0f);
         [SerializeField] private Quaternion baseRot = Quaternion.Euler(-27f, 0f, 0f);
@@ -66,85 +73,88 @@ public class Book : MonoBehaviour
         [SerializeField] private float floatDuration = 1.65f;
         [SerializeField] private float floatMagnitude = 0.25f;
         [SerializeField] private float movementLerpSpeed = 4.5f;
-        private bool isReady;
+        private bool inPosition;
         private float timeOffset;
         private float spinTimeOffset;
-        private bool isConnecting = false;
+        private bool isMatchmaking = false;
 
 
-        public BookStateUnopened(Book book_, bool set = true) : base(book_)
+        public BookStateMatchmaker(Book book_) : base(book_) { }
+
+
+        public override void Set()
         {
-            // Initialize state
+            // Initialize book state
             book.cameraController.SetView("Default");
             timeOffset = Time.time;
-            isReady = false;
+            inPosition = false;
+        }
 
+        public void SetToBase()
+        {
             // Set to base positions
-            if (set)
-            {
-                book.transform.position = basePos;
-                book.transform.rotation = baseRot;
-            }
+            book.transform.position = basePos;
+            book.transform.rotation = baseRot;
         }
 
 
         public override void Update()
         {
+            UpdateDynamics();
+            UpdateInteractions();
+        }
+
+        private void UpdateDynamics()
+        {
             // Calculate target pos / rot
             float time = (Time.time - timeOffset);
             float spinTime = (Time.time - spinTimeOffset);
-            Vector3 targetPos = ((book.isHovered || isConnecting) && isReady) ? hoverPos : basePos;
-            Quaternion targetRot = ((book.isHovered || isConnecting) && isReady) ? hoverRot : baseRot;
-            if (isReady && !book.isHovered && !isConnecting) targetPos.y += Mathf.Sin(time / floatDuration * Mathf.PI * 2f) * floatMagnitude;
-            if (isConnecting) targetRot *= Quaternion.AngleAxis(0.2f * spinTime * (360), book.transform.right);
+            Vector3 targetPos = ((book.isHovered || isMatchmaking) && inPosition) ? hoverPos : basePos;
+            Quaternion targetRot = ((book.isHovered || isMatchmaking) && inPosition) ? hoverRot : baseRot;
+            if (inPosition && !book.isHovered && !isMatchmaking) targetPos.y += Mathf.Sin(time / floatDuration * Mathf.PI * 2f) * floatMagnitude;
+            if (isMatchmaking) targetRot *= Quaternion.AngleAxis(0.2f * spinTime * (360), book.transform.right);
 
             // Lerp towards target
             book.transform.position = Vector3.Lerp(book.transform.position, targetPos, Time.deltaTime * movementLerpSpeed);
             book.transform.rotation = Quaternion.Lerp(book.transform.rotation, targetRot, Time.deltaTime * movementLerpSpeed);
+            inPosition = inPosition || (targetPos - book.transform.position).magnitude < 0.1f;
 
             // Set states
-            isReady = isReady || (targetPos - book.transform.position).magnitude < 0.1f;
             book.toOpen = false;
             book.fire.setBrightness(0);
+        }
 
-            // Open when clicked
-            if (!isConnecting && isReady && book.isHovered && Input.GetMouseButtonDown(0))
-            {
-                isConnecting = true;
-                spinTimeOffset = Time.time;
-                book.appManager.TryConnect(OnConnectionStatus);
-            }
-
+        private void UpdateInteractions()
+        {
             // Disconnect on space
-            if (Input.GetKeyDown(KeyCode.Space)) book.appManager.Disconnect();
-        }
+            if (Input.GetKeyDown(KeyCode.Space)) book.multiplayerManager.Disconnect();
 
-
-        private void OnConnectionStatus(int status)
-        {
-            // Could not connect
-            if (status == 0)
+            // Try connect if clicked when in position
+            if ((!isMatchmaking && inPosition) && (book.isHovered && Input.GetMouseButtonDown(0)))
             {
-                isConnecting = false;
+                isMatchmaking = true;
+                spinTimeOffset = Time.time;
 
-            // Connected and waiting for match
-            } else if (status == 1)
-            {
-
-            // Connected and found match
-            } else if (status == 2)
-            {
-                // Transition to opening book
-                book.SetBookState(new BookStateOpening(book));
+                Debug.Log("Trying to connect...");
+                book.multiplayerManager.TryConnect(delegate (bool isConnected)
+                {
+                    Debug.Log("Connection: " + isConnected);
+                    if (!isMatchmaking || !isConnected) { isMatchmaking = false; return; }
+                    book.multiplayerManager.FindMatch(delegate (bool hasMatch)
+                    {
+                        Debug.Log("Match: " + hasMatch);
+                        if (!isMatchmaking || !hasMatch) { isMatchmaking = false; return; }
+                        GotoNext();
+                    });
+                });
             }
         }
 
 
-        public override void OnDisconnect()
-        {
-            // Match disconnected
-            isConnecting = false;
-        }
+        private void GotoNext() => book.SetBookState(new BookStateOpening(book));
+
+
+        public override void OnDisconnect() => isMatchmaking = false;
     }
 
 
@@ -158,11 +168,10 @@ public class Book : MonoBehaviour
         private bool inPosition;
 
 
-        public BookStateOpening(Book book_) : base(book_)
-        {
-            // Initialize state
-            book.cameraController.SetView("Default");
-        }
+        public BookStateOpening(Book book_) : base(book_) { }
+
+
+        public override void Set() => book.cameraController.SetView("Default");
 
 
         public override void Update()
@@ -176,17 +185,17 @@ public class Book : MonoBehaviour
             book.fire.setBrightness(1);
             targetPos = basePos;
             targetRot = baseRot;
-            book.classSelect.SetActive(inPosition);
-
-            // Update state
-            inPosition = (targetPos - book.transform.position).magnitude < 0.2f;
-
+            
             // Lerp towards target
             book.transform.position = Vector3.Lerp(book.transform.position, targetPos, Time.deltaTime * movementLerpSpeed);
             book.transform.rotation = Quaternion.Lerp(book.transform.rotation, targetRot, Time.deltaTime * movementLerpSpeed);
 
+            // Update state
+            inPosition = (targetPos - book.transform.position).magnitude < 0.2f;
+            book.classSelect.SetActive(inPosition);
+
             // Change state when in position
-            if (book.classSelect.GetSetup())
+            if (book.classSelect.isSetup)
             {
                 book.SetBookState(new BookStateSelecting(book));
                 return;
@@ -198,7 +207,7 @@ public class Book : MonoBehaviour
         {
             // Match disconnected
             book.classSelect.SetActive(false);
-            book.SetBookState(new BookStateUnopened(book, false));
+            book.SetBookState(new BookStateMatchmaker(book));
         }
     }
 
@@ -218,9 +227,11 @@ public class Book : MonoBehaviour
         private float timeOffset;
 
 
-        public BookStateSelecting(Book book_) : base(book_)
+        public BookStateSelecting(Book book_) : base(book_) { }
+
+        public override void Set()
         {
-            // Initialize state
+            // Initialize book state
             book.cameraController.SetView("Default");
             timeOffset = Time.time;
         }
@@ -274,7 +285,7 @@ public class Book : MonoBehaviour
             }
 
             // Leave on space
-            if (Input.GetKeyDown(KeyCode.Space)) book.appManager.Disconnect();
+            if (Input.GetKeyDown(KeyCode.Space)) book.multiplayerManager.Disconnect();
         }
 
 
@@ -282,7 +293,7 @@ public class Book : MonoBehaviour
         {
             // Match disconnected
             book.classSelect.SetActive(false);
-            book.SetBookState(new BookStateUnopened(book, false));
+            book.SetBookState(new BookStateMatchmaker(book));
         }
     }
 
@@ -297,11 +308,9 @@ public class Book : MonoBehaviour
         private bool cornerHovered;
 
 
-        public BookStateIngame(Book book_) : base(book_)
-        {
-            // Initialize state
-            book.cameraController.SetView("Default");
-        }
+        public BookStateIngame(Book book_) : base(book_) { }
+
+        public override void Set() => book.cameraController.SetView("Default");
 
 
         public override void Update()
@@ -333,10 +342,11 @@ public class Book : MonoBehaviour
         {
             // Match disconnected
             book.gameManager.UnloadGame();
-            book.SetBookState(new BookStateUnopened(book, false));
+            book.SetBookState(new BookStateMatchmaker(book));
         }
 
 
+        // TODO: Think about sorting this out
         public void SetCornerHovered(bool cornerHovered_) => cornerHovered = cornerHovered_;
         public void SetContentTitle(String text_) => book.SetContentTitle(text_);
         public void SetContentDescription(String text_) => book.SetContentDescription(text_);
@@ -344,7 +354,9 @@ public class Book : MonoBehaviour
     }
 
 
-    public void OnDisconnect() => bookState.OnDisconnect();
+    private void OnDisconnect() => bookState.OnDisconnect();
+
+    private void OnLeaveMatch() => bookState.OnLeaveMatch();
 
     #endregion
 
@@ -371,14 +383,15 @@ public class Book : MonoBehaviour
     #endregion
 
 
-    // Getters / Setters
-    public void SetBookState(BookState bookState_) => bookState = bookState_;
-    public bool SetOpen(bool toOpen_) => overrideToOpen = toOpen_;
-    public bool GetHovered() => isHovered;
-    public bool GetToOpen() => toOpen;
+    public void SetBookState(BookState bookState_)
+    {
+        if (bookState != null) bookState.Unset();
+        bookState = bookState_;
+        bookState.Set();
+    }
 
 
-    // Handle hovering
     private void OnMouseOver() => isHovered = true;
+
     private void OnMouseExit() => isHovered = false;
 }
