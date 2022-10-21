@@ -17,7 +17,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &34533135502696799
 Transform:
   m_ObjectHideFlags: 0
@@ -98,7 +98,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &3739604118917051259
 Transform:
   m_ObjectHideFlags: 0
@@ -143,11 +143,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   hoverCollider: {fileID: 3209083635757083590}
   hoverChecker: {fileID: 814639541612090024}
-  optionClass: {fileID: 11400000, guid: 82d85f00a404cea4fb2bddfaf57a2dc6, type: 2}
+  _optionClass: {fileID: 0}
   emissiveObject: {fileID: 3648419736815385127}
   selectedOffset: 0.6
   playOffset: 1
   hoverOffsetLerp: 5
+  targetPosition: {x: 0, y: 0, z: 0}
 --- !u!1001 &7948195952746651510
 PrefabInstance:
   m_ObjectHideFlags: 0

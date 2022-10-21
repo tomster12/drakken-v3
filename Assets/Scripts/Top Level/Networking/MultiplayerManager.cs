@@ -7,7 +7,8 @@ using Unity.Netcode.Transports.UNET;
 
 public class MultiplayerManager : MonoBehaviour
 {
-    public static MultiplayerManager instance;
+    public static MultiplayerManager instance { get; private set; }
+    public static Action<bool> OnTryConnect;
     public static Action OnDisconnect;
 
     [Header("References")]
@@ -17,12 +18,10 @@ public class MultiplayerManager : MonoBehaviour
     [Header("Prefabs")]
     [SerializeField] private GameObject matchmakerPrefab;
 
-    [Header("Config")]
-    [SerializeField] private bool _isServer;
-    public bool isServer => _isServer;
+    public bool isServer { get; private set; }
 
 
-    public void Awake()
+    private void Awake()
     {
         // Singleton handling
         if (instance != null) return;
@@ -32,19 +31,21 @@ public class MultiplayerManager : MonoBehaviour
     public void Init(string configFileName)
     {
         // Main initialization
-        ReadConfig(configFileName);
+        InitConfig(configFileName);
         if (isServer) InitServer_Serverside();
         else InitClient();
     }
 
-
-    private void ReadConfig(string configFilePath)
+    private void InitConfig(string configFilePath)
     {
         System.IO.StreamReader reader = new System.IO.StreamReader(configFilePath);
         UNetTransport unet = networkManager.GetComponent<UNetTransport>();
         String address = reader.ReadLine();
         String port = reader.ReadLine();
-        _isServer = isServer || (reader.ReadLine() == "1");
+        isServer = reader.ReadLine() == "1";
+        #if UNITY_EDITOR
+        isServer |= ParrelSync.ClonesManager.GetArgument() == "server";
+        #endif
         unet.ConnectAddress = address;
         unet.ConnectPort = int.Parse(port);
         unet.ServerListenPort = int.Parse(port);
@@ -61,7 +62,7 @@ public class MultiplayerManager : MonoBehaviour
         networkManager.OnClientDisconnectCallback += OnClientDisconnect_Serverside;
 
         // Start connection as server
-        Debug.Log("Ml: Hosting...");
+        Debug.Log("Hosting...");
         networkManager.StartServer();
         clientParent.gameObject.SetActive(false);
 
@@ -76,7 +77,7 @@ public class MultiplayerManager : MonoBehaviour
         if (!networkManager.IsServer) return;
 
         // Client has connected to the server
-        Debug.Log("Ml: Client Connected: " + clientId);
+        Debug.Log("Client Connected: " + clientId);
     }
 
     private void OnClientDisconnect_Serverside(ulong clientId)
@@ -84,7 +85,7 @@ public class MultiplayerManager : MonoBehaviour
         if (!networkManager.IsServer) return;
 
         // Stop matchmaking and close match
-        Debug.Log("Ml: Client Disconnected: " + clientId);
+        Debug.Log("Client Disconnected: " + clientId);
         Matchmaker.instance.OnClientDisconnect_Serverside(clientId);
     }
 
@@ -93,65 +94,78 @@ public class MultiplayerManager : MonoBehaviour
 
     #region Client
 
+    public bool isConnecting { get; private set; } = false;
     public bool isConnected { get; private set; } = false;
     public bool isSearching => Matchmaker.instance.isSearching;
     public bool hasMatch => Matchmaker.instance.hasMatch;
 
 
-    private void InitClient() { }
-
-
-    public void TryConnect(Action<bool> callback)
+    private void InitClient()
     {
-        if (isConnected) { callback(true); return; }
+        // Add callbacks once for connection checking
+        Matchmaker.OnSpawn += CheckConnected;
+    }
 
-        // Connect to server
-        Debug.Log("Ml: Connecting to server");
-        bool connectionCreated = networkManager.StartClient();
-        if (!connectionCreated) { callback(false); return; }
 
-        // Wait for network objects
-        Matchmaker.OnSpawn += delegate ()
+    public bool TryConnect()
+    {
+        if (isConnected) return false;
+
+        // Try connect to the server and wait for response
+        isConnecting = true;
+        if (!networkManager.StartClient())
         {
-            // All network objects spawned
-            Debug.Log("Ml: Connected!");
-            isConnected = true;
-            callback(true);
-        };
+            isConnecting = false;
+            if (OnTryConnect != null) OnTryConnect(false);
+        }
+        CheckConnected();
+        return true;
     }
 
-    public void Disconnect()
+    private void CheckConnected()
     {
-        if (!isConnected) return;
+        if (!isConnecting) return;
+        if (Matchmaker.instance == null) return;
 
-        // Disconnect and call event
-        Debug.Log("Ml: Disconnecting from server");
-        LeaveMatchmaking();
+        // All objects have spawned so have connected
+        isConnecting = false;
+        isConnected = true;
+        if (OnTryConnect != null) OnTryConnect(true);
+    }
+
+    public bool Disconnect()
+    {
+        if (!isConnecting && !isConnected) return false;
+
+        // Disconnect from server and immediately callback
         networkManager.Shutdown();
+        isConnecting = false;
         isConnected = false;
+        if (OnTryConnect != null) OnTryConnect(false);
         if (OnDisconnect != null) OnDisconnect();
+        return true;
     }
 
 
-    public void FindMatch(Action<bool> callback)
+    public bool TryFindMatch()
     {
-        if (Matchmaker.instance == null) { callback(false); return; }
-        if (!isConnected || isSearching) { callback(false); return; }
-        if (hasMatch) { callback(true); return; }
+        if (Matchmaker.instance == null) return false;
+        if (!isConnected || isSearching) return false;
+        if (hasMatch) return false;
 
-        // Try find a match on the matchmaker
-        Debug.Log("Ml: Searching for a match");
-        Matchmaker.instance.FindMatch(callback);
+        // Passthrough to the Matchmaker instance
+        Matchmaker.instance.TryFindMatch();
+        return true;
     }
 
-    public void LeaveMatchmaking()
+    public bool TryLeaveMatchmaking()
     {
-        if (!isConnected) return;
-        if (!isSearching && !hasMatch) return;
+        if (!isConnected) return false;
+        if (!isSearching && !hasMatch) return false;
 
-        // Tell matchmaker to leave the match
-        Debug.Log("Ml: Leaving matchmaking");
-        Matchmaker.instance.LeaveMatchmaking();
+        // Passthrough to the Matchmaker instance
+        Matchmaker.instance.TryLeaveMatchmaking();
+        return true;
     }
 
     #endregion

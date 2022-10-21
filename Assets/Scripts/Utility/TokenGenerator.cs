@@ -13,7 +13,6 @@ public class TokenGenerator : MonoBehaviour
 
     private void Update() => UpdateMesh();
 
-
     private void UpdateMesh()
     {
         // Keep mesh correct

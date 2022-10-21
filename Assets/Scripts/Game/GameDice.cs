@@ -5,14 +5,7 @@ using UnityEngine;
 public class GameDice : MonoBehaviour
 {
 
-    public bool getLanded()
-    {
-        return true;
-    }
+    public bool getLanded() => true;
 
-
-    public int getValue()
-    {
-        return 3;
-    }
+    public int getValue() => 3;
 }

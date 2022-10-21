@@ -7,12 +7,13 @@ using Unity.Netcode;
 [Serializable]
 public class Match : NetworkBehaviour
 {
-    public static Match instance;
+    public static Match instance { get; private set; }
     public static Action OnSpawn;
 
+    [Header("References")]
     [SerializeField] private NetworkObject net;
 
-    [SerializeField] private ulong clientId1, clientId2; // Temporary serialize to show
+    private ulong clientId1, clientId2;
 
 
     public override void OnNetworkSpawn()
@@ -34,9 +35,10 @@ public class Match : NetworkBehaviour
         clientId2 = clientId2_;
     }
 
-
     public bool ContainsClient_Serverside(ulong clientId)
     {
+        if (!IsServer) return false;
+
         // Check if Match contains a client
         return clientId1 == clientId || clientId2 == clientId;
     }
@@ -47,7 +49,6 @@ public class Match : NetworkBehaviour
         if (!IsServer) return;
 
         // Close match
-        Debug.Log("MS: Closing match");
         CloseMatch_ClientRpc();
         net.Despawn();
     }
@@ -60,11 +61,12 @@ public class Match : NetworkBehaviour
     [ClientRpc]
     public void CloseMatch_ClientRpc()
     {
+        Debug.Log("Closing down match clientside");
+
         // Remove this match from existence
-        Debug.Log("M: Closing match");
         instance = null;
         OnSpawn = null;
-        Matchmaker.instance.OnCloseMatch();
+        Matchmaker.instance.CallCloseMatch();
     }
 
 

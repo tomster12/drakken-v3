@@ -28,28 +28,31 @@ public class ClassSelect : MonoBehaviour
 
     private void Update()
     {
-        UpdateOptions();
-        SetupOptions();
+        if (!isActive) return;
+
+        // Handle main updates
+        UpdateSetup();
+        UpdateInteractive();
     }
 
-
-    private void SetupOptions()
+    private void UpdateSetup()
     {
         if (!isActive || isSetup) return;
 
         // Setup option positions
         for (int i = 0; i < options.Length; i++)
         {
-            options[i].SetClickable(false);
-            bool isStarted = setupTimer >= i * setupPieceOffset;
+            float startTime = i * setupPieceOffset;
+            bool isStarted = setupTimer >= startTime;
             options[i].SetActive(isStarted);
+            options[i].SetClickable(false);
             if (isStarted)
             {
-                float pct = (setupTimer - i * setupPieceOffset) / setupPieceDuration;
-                pct = Mathf.Min(Mathf.Max(pct, 0f), 1f);
+                float tokenPct = (setupTimer - startTime) / setupPieceDuration;
+                tokenPct = Mathf.Min(Mathf.Max(tokenPct, 0f), 1f);
                 float scroll = -(i - (setupTimer - setupPieceDuration) / setupPieceOffset);
-                options[i].SetTargetPosition(GetOptionSetupPosition(0f, pct, scroll));
-                options[i].transform.rotation = GetOptionSetupRotation(0f, pct, scroll);
+                options[i].targetPosition = GetOptionSetupPosition(0f, tokenPct, scroll);
+                options[i].transform.rotation = GetOptionSetupRotation(0f, tokenPct, scroll);
             }
         }
 
@@ -61,17 +64,15 @@ public class ClassSelect : MonoBehaviour
         {
             isSetup = true;
             currentScrollVel += 1f / setupPieceOffset;
-            return;
         }
     }
 
-
-    private void UpdateOptions()
+    private void UpdateInteractive()
     {
         if (!isActive || !isSetup) return;
 
-        // Centre selected option
-        else if (selectedIndex != -1)
+        // Scroll towards selected index
+        if (selectedIndex != -1)
         {
             float targetScroll = -selectedIndex + options.Length * 0.25f;
             float diff = targetScroll - currentScroll;
@@ -94,7 +95,7 @@ public class ClassSelect : MonoBehaviour
             // Update option position
             options[i].SetActive(true);
             options[i].SetClickable(true);
-            options[i].SetTargetPosition(GetOptionCurrentPosition(i, currentScroll));
+            options[i].targetPosition = GetOptionCurrentPosition(i, currentScroll);
             options[i].transform.rotation = GetOptionCurrentRotation(i, currentScroll);
 
             // Check if clicked
@@ -112,7 +113,17 @@ public class ClassSelect : MonoBehaviour
     }
 
 
-    #region Token Positions
+    private Vector3 GetOptionSetupPosition(float index, float pct, float scroll = 0f)
+    {
+        // Return lerped base options position
+        return Vector3.Lerp(transform.position, GetOptionCurrentPosition(index, scroll), pct);
+    }
+
+    private Quaternion GetOptionSetupRotation(float index, float pct, float scroll = 0f)
+    {
+        // Return base options rotation
+        return Quaternion.Lerp(Quaternion.identity, GetOptionCurrentRotation(index, scroll), pct);
+    }
 
     private Vector3 GetOptionCurrentPosition(float index, float scroll)
     {
@@ -126,42 +137,30 @@ public class ClassSelect : MonoBehaviour
         return start + offset;
     }
 
-    private Quaternion GetOptionCurrentRotation(float index, float scroll=0f)
+    private Quaternion GetOptionCurrentRotation(float index, float scroll = 0f)
     {
         // Generate angle pointing outwards
         float angle = ((float)(index + scroll) / options.Length) * 360f - 90f;
         return Quaternion.Euler(-25f, angle, 0f);
     }
 
-    private Vector3 GetOptionSetupPosition(float index, float pct, float scroll=0f)
-    {
-        // Return lerped base options position
-        return Vector3.Lerp(transform.position, GetOptionCurrentPosition(index, scroll), pct);
-    }
-
-    private Quaternion GetOptionSetupRotation(float index, float pct, float scroll=0f)
-    {
-        // Return base options rotation
-        return Quaternion.Lerp(Quaternion.identity, GetOptionCurrentRotation(index, scroll), pct);
-    }
-
-    #endregion
-
-
+    public ClassSelectOption GetSelectedOption() => (selectedIndex == -1) ? null : options[selectedIndex];
+    
     public void SetActive(bool isActive_)
     {
         if (isActive_ == isActive) return;
 
-        // Update isActive
+        // Update all variables
         setupTimer = 0f;
         currentScroll = 0f;
+        currentScrollVel = 0f;
         selectedIndex = -1;
+        isActive = isActive_;
         isSetup = false;
         hasInteracted = false;
+
+        // Show / hide gameobject and turn off options until setup
         foreach (ClassSelectOption option in options) option.SetActive(false);
-        isActive = isActive_;
+        if (gameObject.activeSelf != isActive_) gameObject.SetActive(isActive_);
     }
-
-
-    public ClassSelectOption GetSelectedOption() => (selectedIndex == -1) ? null : options[selectedIndex];
 }

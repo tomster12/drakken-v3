@@ -8,21 +8,23 @@ using System.Collections;
 public class GameManager : MonoBehaviour
 {
     // Declare variables
-    public static GameManager instance;
+    public static GameManager instance { get; private set; }
 
     [Header("References")]
+    [SerializeField] private HoverChild cornerViewHover;
     [SerializeField] private CameraController cameraController;
+    [SerializeField] private MultiplayerManager multiplayerManager;
     [SerializeField] private Fire fire;
+    [SerializeField] private Book book;
 
-    [SerializeField] private Book.BookStateIngame ingameBook;
+    [SerializeField] private AppManager.AppStateIngame appState;
     [SerializeField] private TokenData[] potentialTokens;
     [SerializeField] private Transform diceRollTransform;
-    [SerializeField] private HoverChild cornerViewHover;
     [SerializeField] private GameBoard localBoard;
     [SerializeField] GameObject dicePfb;
 
-    private Match match;
-    private bool isLoaded;
+    private bool isActive;
+    private bool isStarted;
     private ClassData currentClass;
     private List<GameDice> currentDice;
     private int diceValueTotal;
@@ -34,64 +36,76 @@ public class GameManager : MonoBehaviour
         if (instance != null) return;
         instance = this;
     }
-
-
-    public void StartGame(ClassData currentClass_, Book.BookStateIngame ingameBook_)
-    {
-        // Update variables
-        if (!gameObject.activeSelf) gameObject.SetActive(true);
-        currentClass = currentClass_;
-        ingameBook = ingameBook_;
-
-        // Ready up
-        Match.instance.ReadyUp(LoadGame);
-    }
-
-    public void StopGame()
-    {
-        // Update variables
-        if (gameObject.activeSelf) gameObject.SetActive(false);
-        currentClass = null;
-        ingameBook = null;
-    }
-
-    public void LoadGame()
-    {
-        // Roll dice, generate tokens
-        RollDice(4, true);
-        localBoard.GenerateTokens(5, true);
-        isLoaded = true;
-    }
-
-    public void UnloadGame()
-    {
-        // Unload variables
-        ResetDice();
-        localBoard.ResetTokens();
-        isLoaded = false;
-    }
-
-
+    
+    
     private void Update()
     {
-        if (!isLoaded) return;
+        if (!isStarted) return;
 
         // Update dice value total
         diceValueTotal = 0;
         foreach (GameDice dice in currentDice) diceValueTotal += dice.getValue();
 
-        // Update Book
-        if (ingameBook != null)
-        {
-            ingameBook.SetContentTitle(currentClass.className);
-            ingameBook.SetContentDescription(currentClass.classDescription);
-            ingameBook.SetCornerHovered(cornerViewHover.GetHovered());
-            if (ingameBook.IsOpen()) cameraController.SetView("Corner Book Close");
-            else cameraController.SetView("Default");
-        }
+        // Update state
+        book.toOpen = book.inPosition && (book.isHovered || cornerViewHover.GetHovered());
+        book.SetContentTitle(currentClass.className);
+        book.SetContentDescription(currentClass.classDescription);
+        book.SetPlace("Tabletop Corner");
+        fire.brightness = 0.2f;
+        cameraController.SetView("Default");
+        if (book.toOpen) cameraController.SetView("Tabletop Corner");
+        else cameraController.SetView("Default");
 
-        // Update fire
-        fire.setBrightness(0.2f);
+        // Leave on space
+        if (Input.GetKeyDown(KeyCode.Space)) multiplayerManager.TryLeaveMatchmaking();
+    }
+
+
+    public void EnterGame(ClassData currentClass_, AppManager.AppStateIngame appState_)
+    {
+        if (isActive) return;
+
+        // Update variables
+        if (!gameObject.activeSelf) gameObject.SetActive(true);
+        currentClass = currentClass_;
+        appState = appState_;
+        isActive = true;
+
+        // Ready up
+        Match.instance.ReadyUp(StartGame);
+    }
+
+    public void ExitGame()
+    {
+        if (!isStarted) return;
+
+        // Update variables
+        if (isActive) StopGame();
+        if (gameObject.activeSelf) gameObject.SetActive(false);
+        currentClass = null;
+        appState = null;
+        isActive = false;
+    }
+
+
+    public void StartGame()
+    {
+        if (isStarted) return;
+
+        // Roll dice, generate tokens
+        RollDice(4, true);
+        localBoard.GenerateTokens(5, true);
+        isStarted = true;
+    }
+
+    public void StopGame()
+    {
+        if (!isStarted) return;
+
+        // Unload variables
+        ResetDice();
+        localBoard.ResetTokens();
+        isStarted = false;
     }
 
 
@@ -140,7 +154,4 @@ public class GameManager : MonoBehaviour
         foreach (GameDice d in currentDice) Destroy(d.gameObject);
         currentDice.Clear();
     }
-
-
-    public void SetMatch(Match match_) => match = match_;
 }

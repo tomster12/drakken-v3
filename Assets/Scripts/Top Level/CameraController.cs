@@ -1,21 +1,22 @@
 ﻿
+using System.Collections.Generic;
 using UnityEngine;
 
 
 public class CameraController : MonoBehaviour
 {
     // Declare variables
-    public static CameraController instance;
+    public static CameraController instance { get; private set; }
 
     [Header("References")]
     [SerializeField] private Camera cam;
-    [SerializeField] private Transform defaultView;
-    [SerializeField] private Transform[] views;
+    [SerializeField] private Transform[] viewsList;
 
     [Header("Config")]
     [SerializeField] private float wibbleAmount = 3.5f;
     [SerializeField] private float viewLerp = 3.5f;
 
+    private Dictionary<string, Transform> views = new Dictionary<string, Transform>();
     private Transform currentView;
 
 
@@ -25,10 +26,14 @@ public class CameraController : MonoBehaviour
         if (instance != null) return;
         instance = this;
 
+        // Set camera variables
+        cam.depthTextureMode = DepthTextureMode.Depth;
+
+        // Put views into a hashmap
+        foreach (Transform view in viewsList) views[view.gameObject.name] = view;
+
         // Set to default view
-        SetView("Default");
-        transform.position = currentView.position;
-        transform.rotation = currentView.rotation;
+        SetView("Default", true);
     }
 
 
@@ -66,21 +71,18 @@ public class CameraController : MonoBehaviour
     }
 
 
-    public void SetView(string viewName)
+    public void SetView(string viewName, bool setPos=false)
     {
-        // Set to default view
-        if (viewName == "Default") { currentView = defaultView; return; }
+        // Dont set if already or doesnt exist
+        if (currentView != null && currentView.gameObject.name == viewName) return;
+        if (!views.ContainsKey(viewName)) return;
 
-        // Dont set if already
-        if (currentView.gameObject.name == viewName) return;
-
-        // Find and then set to camera view
-        Transform view = null;
-        for (int i = 0; i < views.Length; i++)
+        // Set to camera view
+        currentView = views[viewName];
+        if (setPos)
         {
-            if (views[i].gameObject.name == viewName) view = views[i];
+            transform.position = currentView.position;
+            transform.rotation = currentView.rotation;
         }
-        if (view != null) currentView = view;
-        
     }
 }

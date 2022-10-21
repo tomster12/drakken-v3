@@ -25,30 +25,11 @@ public class GameBoard : MonoBehaviour
     }
 
 
-    public void GenerateTokens(int count, bool reset = true)
-    {
-        // Reset tokens if needed
-        if (reset) ResetTokens();
-
-        // Create new tokens
-        for (int i = 0; i < count; i++)
-        {
-            GameObject tokenObj = Instantiate(tokenPfb);
-            GameToken token = tokenObj.GetComponent<GameToken>();
-            token.LoadToken(gameManager.GenerateRandomToken());
-            tokenObj.transform.localScale = Vector3.one * tokenWidth;
-            tokenObj.transform.parent = transform;
-            currentTokens.Add(token);
-        }
-    }
-
-
     private void Update()
     {
         // Update token positions
         UpdateTokens();
     }
-
 
     private void UpdateTokens()
     {
@@ -76,6 +57,32 @@ public class GameBoard : MonoBehaviour
     }
 
 
+    public void GenerateTokens(int count, bool reset = true)
+    {
+        // Reset tokens if needed
+        if (reset) ResetTokens();
+
+        // Create new tokens
+        for (int i = 0; i < count; i++)
+        {
+            GameObject tokenObj = Instantiate(tokenPfb);
+            GameToken token = tokenObj.GetComponent<GameToken>();
+            token.LoadToken(gameManager.GenerateRandomToken());
+            tokenObj.transform.localScale = Vector3.one * tokenWidth;
+            tokenObj.transform.parent = transform;
+            currentTokens.Add(token);
+        }
+    }
+
+    public void ResetTokens()
+    {
+        // Reset current tokens
+        if (currentTokens == null) currentTokens = new List<GameToken>();
+        foreach (GameToken t in currentTokens) Destroy(t.gameObject);
+        currentTokens.Clear();
+    }
+
+
     public Vector3 GetTokenPosition(int index)
     {
         // Return token target position
@@ -86,12 +93,4 @@ public class GameBoard : MonoBehaviour
         );
     }
 
-
-    public void ResetTokens()
-    {
-        // Reset current tokens
-        if (currentTokens == null) currentTokens = new List<GameToken>();
-        foreach (GameToken t in currentTokens) Destroy(t.gameObject);
-        currentTokens.Clear();
-    }
 }

@@ -8,7 +8,8 @@ public class ClassSelectOption : MonoBehaviour
     [Header("References")]
     [SerializeField] private Collider hoverCollider;
     [SerializeField] private HoverChild hoverChecker;
-    [SerializeField] private ClassData optionClass;
+    [SerializeField] private ClassData _optionClass;
+    public ClassData optionClass => _optionClass;
     [SerializeField] private GameObject emissiveObject;
 
     [Header("Config")]
@@ -17,67 +18,44 @@ public class ClassSelectOption : MonoBehaviour
     [SerializeField] private float hoverOffsetLerp = 4.5f;
 
     private bool isActive;
+    private bool isHovered;
     private bool isClickable;
     private bool isSelected;
-    private Vector3 targetPosition;
     private Vector3 hoverOffset;
+    public Vector3 targetPosition;
 
 
     private void Update()
     {
-        // Run updates
-        UpdatePosition();
-        emissiveObject.SetActive(GetHovered() && isSelected);
-    }
+        if (!isActive) return;
 
+        // Update variables
+        isHovered = hoverChecker.GetHovered();
+        emissiveObject.SetActive(isHovered || isSelected);
 
-    private void UpdatePosition()
-    {
         // Update position
         Vector3 targetOffset = Vector3.zero;
-        if (GetHovered() && isSelected) targetOffset = Vector3.up * playOffset;
-        else if ((GetHovered() || isSelected) && isClickable) targetOffset = Vector3.up * selectedOffset;
+        if (isClickable && isHovered && isSelected) targetOffset = Vector3.up * playOffset;
+        else if (isClickable && (isHovered || isSelected)) targetOffset = Vector3.up * selectedOffset;
         hoverOffset = Vector3.Lerp(hoverOffset, targetOffset, Time.deltaTime * hoverOffsetLerp);
         transform.position = targetPosition + hoverOffset;
     }
 
 
-    public void SetTargetPosition(Vector3 targetPosition_)
-    {
-        // Set target position
-        targetPosition = targetPosition_;
-        UpdatePosition();
-    }
-
     public void SetActive(bool isActive_)
     {
-        // Reset variables
-        if (isActive && !isActive_)
-        {
-            isActive = false;
-            isClickable = false;
-            isSelected = false;
-            hoverOffset = Vector3.zero;
-            gameObject.SetActive(false);
-            hoverChecker.SetOverride(false);
-        }
+        if (isActive == isActive_) return;
 
-        else if (!isActive && isActive_)
-        {
-            isClickable = false;
-            isSelected = false;
-            hoverOffset = Vector3.zero;
-            gameObject.SetActive(true);
-        }
-
-        // Update isActive
+        // Update variables
         isActive = isActive_;
+        gameObject.SetActive(isActive);
+        isClickable = false;
+        isSelected = false;
+        hoverOffset = Vector3.zero;
     }
 
 
     public void SetSelected(bool isSelected_) { isSelected = isSelected_; isClickable = false; }
     public void SetClickable(bool isClickable_)  { isClickable = isClickable_; hoverCollider.enabled = isClickable; }
     public bool GetClicked() => (hoverChecker.GetHovered() && Input.GetMouseButtonDown(0) && isClickable);
-    public bool GetHovered() => isClickable && hoverChecker.GetHovered();
-    public ClassData GetClass() => optionClass;
 }
