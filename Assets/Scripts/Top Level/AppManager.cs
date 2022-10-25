@@ -114,7 +114,7 @@ public class AppManager : MonoBehaviour
                 app.book.SetPlace("Fire Loading");
                 if (app.book.inPosition && matchmakingStatus == 1) StartMatchmaking();
                 if (matchmakingStatus >= 1) app.book.targetRotOffset = Quaternion.AngleAxis(0.2f * spinTime * (360), app.book.transform.right);
-                app.fire.brightness = 0.2f;
+                app.fire.brightness = 0.28f;
             }
             else if (app.book.isHovered)
             {
@@ -122,7 +122,7 @@ public class AppManager : MonoBehaviour
                 app.book.targetPosOffset = hoverPosOffset;
                 app.book.targetPosOffset += new Vector3(0.0f, Mathf.Sin(time / floatDuration * Mathf.PI * 2f) * floatMagnitude, 0.0f);
                 app.book.targetRotOffset = hoverRotOffset;
-                app.fire.brightness = 0.25f;
+                app.fire.brightness = 0.18f;
             } else
             {
                 app.book.SetPlace("Tabletop Central");

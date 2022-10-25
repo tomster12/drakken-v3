@@ -43,7 +43,6 @@ QualitySettings:
     customRenderPipeline: {fileID: 0}
     excludedTargetPlatforms:
     - WebGL
-    - Standalone
   - serializedVersion: 2
     name: Low
     pixelLightCount: 0
@@ -80,7 +79,6 @@ QualitySettings:
     resolutionScalingFixedDPIFactor: 1
     customRenderPipeline: {fileID: 0}
     excludedTargetPlatforms:
-    - Standalone
     - WebGL
   - serializedVersion: 2
     name: Medium
@@ -119,7 +117,6 @@ QualitySettings:
     customRenderPipeline: {fileID: 0}
     excludedTargetPlatforms:
     - WebGL
-    - Standalone
   - serializedVersion: 2
     name: High
     pixelLightCount: 2
@@ -156,7 +153,6 @@ QualitySettings:
     resolutionScalingFixedDPIFactor: 1
     customRenderPipeline: {fileID: 0}
     excludedTargetPlatforms:
-    - Standalone
     - WebGL
   - serializedVersion: 2
     name: Very High
@@ -195,7 +191,6 @@ QualitySettings:
     customRenderPipeline: {fileID: 0}
     excludedTargetPlatforms:
     - WebGL
-    - Standalone
   - serializedVersion: 2
     name: Ultra
     pixelLightCount: 4
