@@ -74,7 +74,7 @@ public class CameraController : MonoBehaviour
     public void SetView(string viewName, bool setPos=false)
     {
         // Dont set if already or doesnt exist
-        if (currentView != null && currentView.gameObject.name == viewName) return;
+        if (currentView != null && currentView.gameObject.name == viewName && !setPos) return;
         if (!views.ContainsKey(viewName)) return;
 
         // Set to camera view

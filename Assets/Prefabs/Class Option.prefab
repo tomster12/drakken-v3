@@ -90,6 +90,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3739604118917051259}
+  - component: {fileID: 4056778683520991051}
   - component: {fileID: 3739604118917051256}
   - component: {fileID: 3739604118917051257}
   m_Layer: 0
@@ -115,6 +116,24 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4056778683520991051
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3739604118917051258}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29c87451acbc5364a8b9ea0f163987e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetPosition: {x: 0, y: 0, z: 0}
+  targetRotation: {x: 0, y: 0, z: 0, w: 0}
+  positionlerpSpeed: 3
+  rotationLerpSpeed: 3
+  toLerpPosition: 0
+  toLerpRotation: 0
 --- !u!114 &3739604118917051256
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -141,14 +160,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef71c6a799e59bd4ab08ffa7bd00aadd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hoverCollider: {fileID: 3209083635757083590}
   hoverChecker: {fileID: 814639541612090024}
-  _optionClass: {fileID: 0}
   emissiveObject: {fileID: 3648419736815385127}
-  selectedOffset: 0.6
-  playOffset: 1
-  hoverOffsetLerp: 5
-  targetPosition: {x: 0, y: 0, z: 0}
+  _lerper: {fileID: 4056778683520991051}
+  _optionClass: {fileID: 0}
+  toGlow: 0
 --- !u!1001 &7948195952746651510
 PrefabInstance:
   m_ObjectHideFlags: 0

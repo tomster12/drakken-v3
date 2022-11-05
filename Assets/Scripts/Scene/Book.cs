@@ -8,28 +8,43 @@ using TMPro;
 public class Book : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private Transform[] placesList;
+    [SerializeField] private Outline outline;
     [SerializeField] private Animator animator;
+    [SerializeField] private Transform[] placesList;
+    [SerializeField] private Light[] lights;
 
     [Header("Content References")]
     [SerializeField] private GameObject contentUI;
     [SerializeField] private TextMeshProUGUI contentTitleText;
     [SerializeField] private TextMeshProUGUI contentDescriptionText;
 
-    private Dictionary<string, Transform> places = new Dictionary<string, Transform>();
+    [Header("Config")]
+    [SerializeField] private float glowIntensity = 50.0f;
+    [SerializeField] private float glowLerpSpeed = 3.0f;
+    [SerializeField] private Color outlineColor = new Color(200.0f, 100.0f, 100.0f, 255.0f);
+    [SerializeField] private float outlineLerpSpeed = 3.0f;
+
+    private Dictionary<string, Transform> places;
     private Transform currentPlace;
+
     public float movementLerpSpeed;
     public Vector3 targetPosOffset;
     public Quaternion targetRotOffset;
-    public bool isHovered { get; private set; }
     public bool toOpen;
+    public float glowAmount = 0.0f;
+    public float outlineAmount = 0.0f;
+    public float inPositionThreshold = 0.1f;
+
+    public bool isHovered { get; private set; }
     public bool isOpen { get; private set; }
-    public bool inPosition { get; private set; }
+    public bool inPosition => ((currentPlace.position + targetPosOffset) - transform.position).magnitude < inPositionThreshold;
+
 
 
     private void Awake()
     {
         // Put places into a hashmap
+        places = new Dictionary<string, Transform>();
         foreach (Transform place in placesList) places[place.gameObject.name] = place;
     }
 
@@ -50,15 +65,25 @@ public class Book : MonoBehaviour
         {
             transform.position = Vector3.Lerp(transform.position, currentPlace.position + targetPosOffset, Time.deltaTime * movementLerpSpeed);
             transform.rotation = Quaternion.Lerp(transform.rotation, currentPlace.rotation * targetRotOffset, Time.deltaTime * movementLerpSpeed);
-            inPosition = ((currentPlace.position + targetPosOffset) - transform.position).magnitude < 0.5f;
         }
+
+        // Update all lights
+        foreach (Light light in lights)
+        {
+            light.intensity = Mathf.Lerp(light.intensity, glowAmount * glowIntensity, Time.deltaTime * glowLerpSpeed);
+        }
+
+        // Update outline
+        Color targetColor = outlineColor;
+        targetColor.a *= outlineAmount;
+        outline.OutlineColor = Color.Lerp(outline.OutlineColor, targetColor, Time.deltaTime * outlineLerpSpeed);
     }
 
 
     public void SetPlace(string placeName, bool setPos=false)
     {
         // Dont set if already there or doesnt exist
-        if (currentPlace != null && currentPlace.gameObject.name == placeName) return;
+        if (currentPlace != null && currentPlace.gameObject.name == placeName && !setPos) return;
         if (!places.ContainsKey(placeName)) return;
 
         // Set to camera view
