@@ -318,7 +318,7 @@ MonoBehaviour:
   - {fileID: 1226659935}
   - {fileID: 1328073523}
   startTransform: {fileID: 1044330248}
-  setupIntervalDuration: 0.25
+  setupIntervalDuration: 0.35
   setupOutwardDuration: 1.3
   setupRotationLerpSpeed: 3
   selectingPositionLerpSpeed: 4.5
@@ -1965,10 +1965,13 @@ MonoBehaviour:
   movementLerpSpeed: 0
   targetPosOffset: {x: 0, y: 0, z: 0}
   targetRotOffset: {x: 0, y: 0, z: 0, w: 0}
-  toOpen: 0
   glowAmount: 0
   outlineAmount: 0
   inPositionThreshold: 0.5
+  openLerpSpeed: 3
+  openThreshold: 0.05
+  toOpen: 0
+  targetPct: 1
 --- !u!4 &1044330248
 Transform:
   m_ObjectHideFlags: 0
@@ -1976,7 +1979,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1044330246}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.1, z: -13}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -8232,17 +8235,17 @@ PrefabInstance:
     - target: {fileID: -2141743580366908993, guid: ef4d95e5cd56aaf409347e4fc9c80a2a,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: -89.98021
+      value: -71.59204
       objectReference: {fileID: 0}
     - target: {fileID: -2141743580366908993, guid: ef4d95e5cd56aaf409347e4fc9c80a2a,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: -22.50026
       objectReference: {fileID: 0}
     - target: {fileID: -2141743580366908993, guid: ef4d95e5cd56aaf409347e4fc9c80a2a,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
+      value: 22.500275
       objectReference: {fileID: 0}
     - target: {fileID: -1567370144596240215, guid: ef4d95e5cd56aaf409347e4fc9c80a2a,
         type: 3}
@@ -8257,32 +8260,32 @@ PrefabInstance:
     - target: {fileID: 3821738444571110958, guid: ef4d95e5cd56aaf409347e4fc9c80a2a,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: -90
+      value: -80.85997
       objectReference: {fileID: 0}
     - target: {fileID: 3821738444571110958, guid: ef4d95e5cd56aaf409347e4fc9c80a2a,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0.000006830189
+      value: -157.49973
       objectReference: {fileID: 0}
     - target: {fileID: 3821738444571110958, guid: ef4d95e5cd56aaf409347e4fc9c80a2a,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
+      value: 157.49973
       objectReference: {fileID: 0}
     - target: {fileID: 8097102938978093253, guid: ef4d95e5cd56aaf409347e4fc9c80a2a,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 0.0000043257096
+      value: 0.0000030386889
       objectReference: {fileID: 0}
     - target: {fileID: 8097102938978093253, guid: ef4d95e5cd56aaf409347e4fc9c80a2a,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0.000007698931
+      value: 0.000007917771
       objectReference: {fileID: 0}
     - target: {fileID: 8097102938978093253, guid: ef4d95e5cd56aaf409347e4fc9c80a2a,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: -179.99998
+      value: -158.58878
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ef4d95e5cd56aaf409347e4fc9c80a2a, type: 3}
@@ -8863,13 +8866,19 @@ MonoBehaviour:
     bookHoverPosOffset: {x: 0, y: 1.75, z: 0}
     bookHoverRotOffset: {x: -0.08715574, y: 0, z: 0, w: 0.9961947}
     bookOpeningPosOffset: {x: 0, y: 5, z: 0}
-    bookStartedPosOffset: {x: 0, y: 0.7, z: 0}
-    bookHoverDuration: 1.65
-    bookHoverMagnitude: 0.25
+    bookSelectingPosOffset: {x: 0, y: 1, z: 0}
+    bookWaveDuration: 1.65
+    bookWaveMagnitude: 0.25
     bookHoverLerpSpeed: 3
-    bookOpeningLerpSpeed: 7
-    bookStartedLerpSpeed: 1.2
-    bookInPositionThreshold: 0.3
+    bookOpeningLerpSpeed: 6
+    bookSelectingLerpSpeed: 1.2
+    bookInPositionThreshold: 0.5
+    fireBrightnessOpening: 0.3
+    fireBrightnessSelecting: 0.1
+    fireBrightnessHovering: 0.25
+    fireBrightnessSelected: 0.35
+    bookToOpenLerpSpeed: 4
+    bookOpeningToOpenThreshold: 0.9
   stateMatchmaker:
     app: {fileID: 1830773400}
     bookHoverPosOffset: {x: 0, y: 1.5, z: 0}

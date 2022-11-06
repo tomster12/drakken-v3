@@ -76,17 +76,19 @@ public class AppManager : MonoBehaviour
         [SerializeField] private Vector3 bookHoverPosOffset = new Vector3(0.0f, 2f, 0.0f);
         [SerializeField] private Quaternion bookHoverRotOffset = Quaternion.Euler(-10f, 0.0f, 0.0f);
         [SerializeField] private Vector3 bookOpeningPosOffset = new Vector3(0.0f, 3f, 0.0f);
-        [SerializeField] private Vector3 bookStartedPosOffset = new Vector3(0.0f, 1f, 0.0f);
-        [SerializeField] private float bookHoverDuration = 1.65f;
-        [SerializeField] private float bookHoverMagnitude = 0.25f;
+        [SerializeField] private Vector3 bookSelectingPosOffset = new Vector3(0.0f, 1f, 0.0f);
+        [SerializeField] private float bookWaveDuration = 1.65f;
+        [SerializeField] private float bookWaveMagnitude = 0.25f;
         [SerializeField] private float bookHoverLerpSpeed = 3.0f;
         [SerializeField] private float bookOpeningLerpSpeed = 1.75f;
-        [SerializeField] private float bookStartedLerpSpeed = 6.0f;
+        [SerializeField] private float bookSelectingLerpSpeed = 6.0f;
         [SerializeField] private float bookInPositionThreshold = 0.2f;
         [SerializeField] private float fireBrightnessOpening = 0.3f;
         [SerializeField] private float fireBrightnessSelecting = 0.1f;
         [SerializeField] private float fireBrightnessHovering = 0.25f;
         [SerializeField] private float fireBrightnessSelected = 0.35f;
+        [SerializeField] private float bookToOpenLerpSpeed = 1.5f;
+        [SerializeField] private float bookOpeningToOpenThreshold = 0.8f;
 
         private bool hasStarted = false;
         private bool bookInitialSet;
@@ -122,6 +124,8 @@ public class AppManager : MonoBehaviour
         {
             menu.SetActive(false);
             menu.onFizzled -= GotoNext;
+            app.book.targetPct = 1.0f;
+            app.book.openLerpSpeed = 3.0f;
         }
 
 
@@ -137,7 +141,7 @@ public class AppManager : MonoBehaviour
                 if (app.book.isHovered)
                 {
                     app.book.targetPosOffset = bookHoverPosOffset;
-                    app.book.targetPosOffset += new Vector3(0.0f, Mathf.Sin(time / bookHoverDuration * Mathf.PI * 2f) * bookHoverMagnitude, 0.0f);
+                    app.book.targetPosOffset += new Vector3(0.0f, Mathf.Sin(time / bookWaveDuration * Mathf.PI * 2f) * bookWaveMagnitude, 0.0f);
                     app.book.targetRotOffset = bookHoverRotOffset;
                     app.book.outlineAmount = 1.0f;
                     app.book.glowAmount = 0.7f;
@@ -153,31 +157,34 @@ public class AppManager : MonoBehaviour
             }
             else
             {
-                app.fire.brightness = fireBrightnessOpening;
                 app.book.outlineAmount = 0.0f;
                 if (!bookInitialSet)
                 {
                     app.book.movementLerpSpeed = bookOpeningLerpSpeed;
                     app.book.targetPosOffset = bookOpeningPosOffset;
-                    app.book.targetRotOffset = Quaternion.identity;
+                    app.book.targetRotOffset = Quaternion.Euler(0.0f, 0.0f, 3.5f);
+                    app.book.targetPct = 0.9f;
                     app.book.glowAmount = 0.9f;
+                    app.book.openLerpSpeed = bookToOpenLerpSpeed;
                     app.book.toOpen = true;
-                    bookInitialSet |= app.book.isOpen && app.book.inPosition;
+                    app.fire.brightness = fireBrightnessOpening;
+                    bookInitialSet |= app.book.inPosition && (app.book.normalizedPct > bookOpeningToOpenThreshold);
                     if (bookInitialSet) menu.SetActive(true);
                 }
                 else
                 {
-                    app.book.movementLerpSpeed = bookStartedLerpSpeed;
-                    app.book.targetPosOffset = bookStartedPosOffset;
+                    app.book.movementLerpSpeed = bookSelectingLerpSpeed;
+                    app.book.targetPosOffset = bookSelectingPosOffset;
                     app.book.targetRotOffset = Quaternion.identity;
+                    app.book.targetPct = 1.0f;
                     app.book.glowAmount = 0.0f;
+                    app.fire.brightness = fireBrightnessSelecting;
                     if (menu.isSetup) app.fire.brightness = fireBrightnessSelecting;
                     if (menu.selectedIndex != -1) app.fire.brightness = fireBrightnessSelected;
                     else if (menu.hoveredIndex != -1) app.fire.brightness = fireBrightnessHovering;
                 }
             }
         }
-
 
 
         private void GotoNext() => app.GotoMatchmaker();

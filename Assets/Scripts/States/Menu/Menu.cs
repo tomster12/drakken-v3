@@ -105,7 +105,7 @@ public class Menu : MonoBehaviour
             }
         }
 
-        if (timeDiff > (options.Length - 1) * setupIntervalDuration + setupOutwardDuration) StartSelecting();
+        if (timeDiff > (options.Length - 1) * setupIntervalDuration + setupOutwardDuration * 0.9f) StartSelecting();
     }
 
     private void UpdateSelecting()

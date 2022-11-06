@@ -26,18 +26,23 @@ public class Book : MonoBehaviour
 
     private Dictionary<string, Transform> places;
     private Transform currentPlace;
+    private float currentPct;
 
     public float movementLerpSpeed;
     public Vector3 targetPosOffset;
     public Quaternion targetRotOffset;
-    public bool toOpen;
     public float glowAmount = 0.0f;
     public float outlineAmount = 0.0f;
     public float inPositionThreshold = 0.1f;
+    public float openLerpSpeed = 1.0f;
+    public float openThreshold = 0.02f;
+    public bool toOpen;
+    public float targetPct = 1.0f;
 
     public bool isHovered { get; private set; }
     public bool isOpen { get; private set; }
     public bool inPosition => ((currentPlace.position + targetPosOffset) - transform.position).magnitude < inPositionThreshold;
+    public float normalizedPct => currentPct / targetPct;
 
 
 
@@ -57,8 +62,9 @@ public class Book : MonoBehaviour
         contentUI.SetActive(isOpen);
 
         // Update states
-        animator.SetBool("isOpen", toOpen);
-        isOpen = toOpen && animator.GetCurrentAnimatorStateInfo(0).IsName("Open");
+        currentPct = Mathf.Lerp(currentPct, toOpen ? targetPct : 0.0f, Time.deltaTime * openLerpSpeed);
+        animator.SetFloat("normalizedTime", currentPct);
+        isOpen = toOpen && (1 - normalizedPct) < openThreshold;
 
         // Lerp towards target
         if (currentPlace != null)

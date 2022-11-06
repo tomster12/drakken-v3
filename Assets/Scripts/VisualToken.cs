@@ -7,6 +7,7 @@ public class VisualToken : MonoBehaviour
     // Declare variables
     [Header("References")]
     [SerializeField] private HoverChild hoverChecker;
+    [SerializeField] private Renderer mainRenderer;
     [SerializeField] private GameObject emissiveObject;
     [SerializeField] public Lerper _lerper;
     [SerializeField] private ClassData _optionClass;
@@ -26,13 +27,23 @@ public class VisualToken : MonoBehaviour
     public bool toGlow = false;
 
 
+    private void Awake()
+    {
+        // Seperate materials for each visual token
+        for (int i = 0; i < mainRenderer.materials.Length; i++)
+        {
+            mainRenderer.materials[i] = Instantiate(mainRenderer.materials[i]);
+        }
+    }
+
+
     public void Update()
     {
         if (!isActive) return;
 
         // Update variables
         isHovered = hoverChecker.GetHovered();
-        emissiveObject.SetActive(toGlow || isFizzling);
+        emissiveObject.SetActive(toGlow);
         lerper.CallUpdate();
         UpdateFizzling();
     }
@@ -43,6 +54,10 @@ public class VisualToken : MonoBehaviour
 
         // Update variables
         fizzlePct = Mathf.Min((Time.time - fizzleStartTime) / fizzleDuration,  1.0f);
+        foreach (Material mat in mainRenderer.materials)
+        {
+            mat.SetFloat("_Percent", fizzlePct);
+        }
         if (fizzlePct == 1.0f)
         {
             isFizzling = false;
