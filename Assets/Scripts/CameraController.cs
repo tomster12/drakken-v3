@@ -11,13 +11,12 @@ public class CameraController : MonoBehaviour
     [Header("References")]
     [SerializeField] private Camera cam;
     [SerializeField] private Transform[] viewsList;
+    [SerializeField] private PlaceLerper _placeLerper;
+    public PlaceLerper placeLerper => _placeLerper;
 
     [Header("Config")]
     [SerializeField] private float wibbleAmount = 3.5f;
     [SerializeField] private float viewLerp = 3.5f;
-
-    private Dictionary<string, Transform> views = new Dictionary<string, Transform>();
-    private Transform currentView;
 
 
     private void Awake()
@@ -29,36 +28,20 @@ public class CameraController : MonoBehaviour
         // Set camera variables
         cam.depthTextureMode = DepthTextureMode.Depth;
 
-        // Put views into a hashmap
-        foreach (Transform view in viewsList) views[view.gameObject.name] = view;
-
         // Set to default view
-        SetView("Default", true);
+        placeLerper.SetPlace("Default", true);
     }
 
 
     private void Update()
     {
-        // Run update functions
-        UpdatePosition();
+        // Wibble current offset rotation
+        placeLerper.SetOffsetRotation(GetWibbledOffset(placeLerper.currentPlace.rotation), false);
+        placeLerper.CallUpdate();
     }
 
 
-    private void UpdatePosition()
-    {
-        // Move camera to current view
-        if (currentView != null)
-        {
-            Vector3 newPos = Vector3.Lerp(transform.position, currentView.position, Time.deltaTime * viewLerp);
-            Quaternion wibbledTarget = GetWibbledRotation(currentView.rotation);
-            Quaternion newRot = Quaternion.Lerp(transform.rotation, wibbledTarget, Time.deltaTime * viewLerp);
-            transform.position = newPos;
-            transform.rotation = newRot;
-        }
-    }
-
-
-    private Quaternion GetWibbledRotation(Quaternion rot)
+    private Quaternion GetWibbledOffset(Quaternion rot)
     {
         // Move camera towards mouse slightly
         float xCurrent = (rot.eulerAngles.x < 180f) ? rot.eulerAngles.x : (rot.eulerAngles.x - 360f);
@@ -67,22 +50,8 @@ public class CameraController : MonoBehaviour
         float yPct = Mathf.Min(Mathf.Max(2f * (Input.mousePosition.x / Screen.width - 0.5f), -1f), 1f);
         float xWibbled = xCurrent - wibbleAmount * xPct;
         float yWibbled = yCurrent + wibbleAmount * yPct;
-        return Quaternion.Euler(xWibbled, yWibbled, rot.eulerAngles.z);
-    }
-
-
-    public void SetView(string viewName, bool setPos=false)
-    {
-        // Dont set if already or doesnt exist
-        if (currentView != null && currentView.gameObject.name == viewName && !setPos) return;
-        if (!views.ContainsKey(viewName)) return;
-
-        // Set to camera view
-        currentView = views[viewName];
-        if (setPos)
-        {
-            transform.position = currentView.position;
-            transform.rotation = currentView.rotation;
-        }
+        Quaternion target = Quaternion.Euler(xWibbled, yWibbled, rot.eulerAngles.z);
+        Quaternion newRot = Quaternion.Inverse(rot) * target;
+        return newRot;
     }
 }

@@ -5,6 +5,8 @@ using UnityEngine;
 
 public class Menu : MonoBehaviour
 {
+    public enum State { STOPPED, SETUP, SELECTING, SELECTED, FINISHED };
+
     [Header("References")]
     [SerializeField] private VisualToken[] options;
     [SerializeField] private Transform[] transforms;
@@ -13,6 +15,7 @@ public class Menu : MonoBehaviour
     [Header("Config")]
     [SerializeField] private float setupIntervalDuration = 1.0f;
     [SerializeField] private float setupOutwardDuration = 0.5f;
+    [SerializeField] private float setupPositionLerpSpeed = 10f;
     [SerializeField] private float setupRotationLerpSpeed = 4.5f;
     [SerializeField] private float selectingPositionLerpSpeed = 10f;
     [SerializeField] private float selectingRotationLerpSpeed = 10f;
@@ -28,52 +31,69 @@ public class Menu : MonoBehaviour
     public int hoveredIndex { get; private set; } = -1;
     public int selectedIndex { get; private set; } = -1;
     public bool isActive { get; private set; } = false;
-    public bool isSetup { get; private set; } = false;
-    public bool isFizzling { get; private set; } = false;
+    public State state { get; private set; } = State.STOPPED;
 
+    public Action<int> onClick;
     public Action<int> onSelect;
-    public Action onFizzled;
 
 
     private void Reset()
     {
         // Update all variables
         timeStart = Time.time;
-        setupStart = Time.time;
         hoveredIndex = -1;
         selectedIndex = -1;
-        isSetup = false;
-        isFizzling = false;
-        StartSetup();
+        SetStateSetup();
     }
 
-    private void StartSetup()
+
+    private void SetStateSetup()
     {
-        // Update variables
+        // Update tokens
+        setupStart = Time.time;
         for (int i = 0; i < options.Length; i++)
         {
             options[i].transform.position = startTransform.position;
             options[i].transform.rotation = startTransform.rotation;
-            options[i].lerper.toLerpPosition = false;
-            options[i].lerper.targetRotation = transforms[i].rotation;
-            options[i].lerper.toLerpRotation = true;
+            options[i].lerper.positionlerpSpeed = setupPositionLerpSpeed;
             options[i].lerper.rotationLerpSpeed = setupRotationLerpSpeed;
+            options[i].lerper.SetTargetRotation(transforms[i].rotation);
             options[i].toGlow = false;
             options[i].SetActive(false);
         }
+
+        // Update state
+        state = State.SETUP;
     }
 
-    private void StartSelecting()
+    private void SetStateSelecting()
     {
         // Update variables
         setupStart = Time.time;
-        isSetup = true;
         for (int i = 0; i < options.Length; i++)
         {
-            options[i].lerper.toLerpPosition = true;
-            options[i].lerper.rotationLerpSpeed = selectingPositionLerpSpeed;
             options[i].lerper.positionlerpSpeed = selectingRotationLerpSpeed;
+            options[i].lerper.rotationLerpSpeed = selectingPositionLerpSpeed;
         }
+
+        // Update state
+        state = State.SELECTING;
+    }
+
+    private void SetStateSelected()
+    {
+        // Start each option fizzling
+        foreach (VisualToken option in options) option.fizzler.StartFizzle();
+
+        // Update state
+        state = State.SELECTED;
+    }
+
+    private void SetStateFinished()
+    {
+        state = State.FINISHED;
+        SetActive(false);
+        if (onSelect != null) onSelect(selectedIndex);
     }
 
 
@@ -82,12 +102,12 @@ public class Menu : MonoBehaviour
         if (!isActive) return;
         UpdateSetup();
         UpdateSelecting();
-        UpdateFizzling();
+        UpdateSelected();
     }
 
     private void UpdateSetup()
     {
-        if (isSetup) return;
+        if (state != State.SETUP) return;
         float timeDiff = Time.time - timeStart;
 
         // Update all options
@@ -97,93 +117,113 @@ public class Menu : MonoBehaviour
             float startTime = i * setupIntervalDuration;
             if (timeDiff >= startTime)
             {
+                Vector3 target = transforms[i].position;
+
+                // Handle hovering
+                if (options[i].isHovered)
+                {
+                    hoveredIndex = i;
+                    target += Vector3.up * optionHoverHeight;
+                    options[i].toGlow = true;
+                    if (Input.GetMouseButtonDown(0)) Select(i);
+                }
+                else options[i].toGlow = false;
+
                 // Update positions
                 float outwardPct = Mathf.Min(Mathf.Max((timeDiff - startTime) / setupOutwardDuration, 0.0f), 1f);
                 outwardPct = Easing.easeOutExpo(outwardPct);
-                options[i].lerper.targetPosition = Vector3.Lerp(startTransform.position, transforms[i].position, outwardPct);
+                options[i].lerper.SetTargetPosition(Vector3.Lerp(startTransform.position, target, outwardPct));
                 options[i].SetActive(true);
             }
         }
 
-        if (timeDiff > (options.Length - 1) * setupIntervalDuration + setupOutwardDuration * 0.9f) StartSelecting();
+        // Detect when finished
+        if (timeDiff > (options.Length - 1) * setupIntervalDuration + setupOutwardDuration * 0.9f) SetStateSelecting();
     }
 
     private void UpdateSelecting()
     {
-        if (!isSetup) return;
+        if (state != State.SELECTING) return;
         float timeDiff = Time.time - setupStart;
 
         // Update all options
         hoveredIndex = -1;
         for (int i = 0; i < options.Length; i++)
         {
-            // Update positions
-            options[i].lerper.targetPosition = transforms[i].position;
-            options[i].lerper.targetRotation = transforms[i].rotation;
+            Vector3 targetPosition = transforms[i].position;
 
-            // Handle hovering
+            // Hovered so move up
             if (options[i].isHovered)
             {
                 hoveredIndex = i;
-                options[i].lerper.targetPosition += Vector3.up * optionHoverHeight;
+                targetPosition += Vector3.up * optionHoverHeight;
                 options[i].toGlow = true;
                 if (Input.GetMouseButtonDown(0)) Select(i);
             }
+
+            // Otherwise oscillate
             else
             {
-                options[i].lerper.targetPosition += new Vector3(0.0f, Mathf.Sin((timeDiff / optionHoverDuration - i * optionHoverOffset) * Mathf.PI * 2f) * optionHoverMagnitude, 0.0f);
+                targetPosition += new Vector3(0.0f, Mathf.Sin((timeDiff / optionHoverDuration - i * optionHoverOffset) * Mathf.PI * 2f) * optionHoverMagnitude, 0.0f);
                 options[i].toGlow = false;
             }
+
+            // Set targets
+            options[i].lerper.SetTargetPosition(targetPosition);
+            options[i].lerper.SetTargetRotation(transforms[i].rotation);
         }
     }
 
-    private void UpdateFizzling()
+    private void UpdateSelected()
     {
-        if (!isSetup || !isFizzling) return;
+        if (state != State.SELECTED) return;
 
         // Update all options
         bool allFizzled = true;
         for (int i = 0; i < options.Length; i++)
         {
             // Update positions
-            options[i].lerper.targetPosition = transforms[i].position;
-            options[i].lerper.targetRotation = transforms[i].rotation;
-            options[i].lerper.positionlerpSpeed = selectedPositionLerpSpeed;
-            if (selectedIndex == i) options[i].lerper.targetPosition += Vector3.up * (optionHoverHeight + optionSelectedHeight);
-            else options[i].lerper.targetPosition += Vector3.up * (optionHoverHeight - optionSelectedHeight);
+            Vector3 targetPosition = transforms[i].position;
+            Quaternion targetRotation = transforms[i].rotation;
+            options[i].toGlow = selectedIndex == i;
+            if (selectedIndex == i) targetPosition += Vector3.up * (optionHoverHeight + optionSelectedHeight);
+            else targetPosition += Vector3.up * (optionHoverHeight - optionSelectedHeight);
+            options[i].lerper.SetTargetPosition(targetPosition);
+            options[i].lerper.SetTargetRotation(targetRotation);
 
             // Check whether fizzled
-            allFizzled &= options[i].fizzlePct == 1.0f;
+            allFizzled &= !options[i].isActive || (options[i].fizzler.fizzlePct == 1.0f);
         }
 
         // Handle finished fizzling
-        if (allFizzled)
-        {
-            isFizzling = false;
-            SetActive(false);
-            if (onFizzled != null) onFizzled();
-        }
+        if (allFizzled) SetStateFinished();
     }
 
 
     public void SetActive(bool isActive_)
     {
         if (isActive == isActive_) return;
-        if (isFizzling) return;
+        if (state == State.SELECTED) return;
 
         // Update variables and reset
         isActive = isActive_;
-        for (int i = 0; i < options.Length; i++) options[i].SetActive(false);
+        Debug.Log("Setting menu to " + isActive);
         if (gameObject.activeSelf != isActive_) gameObject.SetActive(isActive);
+        for (int i = 0; i < options.Length; i++) options[i].SetActive(false);
         if (isActive) Reset();
     }
 
     private void Select(int index)
     {
         // Update variables
-        isFizzling = true;
+        for (int i = 0; i < options.Length; i++)
+        {
+            options[i].lerper.positionlerpSpeed = selectingRotationLerpSpeed;
+            options[i].lerper.rotationLerpSpeed = selectingPositionLerpSpeed;
+        }
+        state = State.SELECTED;
         selectedIndex = index;
-        foreach (VisualToken option in options) option.StartFizzle();
-        if (onSelect != null) onSelect(index);
+        SetStateSelected();
+        if (onClick != null) onClick(index);
     }
 }

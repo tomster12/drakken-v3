@@ -47,14 +47,14 @@ public class GameManager : MonoBehaviour
         foreach (GameDice dice in currentDice) diceValueTotal += dice.getValue();
 
         // Update state
-        book.toOpen = book.inPosition && (book.isHovered || cornerViewHover.GetHovered());
+        book.toOpen = book.placeLerper.inPosition && (book.isHovered || cornerViewHover.GetHovered());
         book.SetContentTitle(currentClass.className);
         book.SetContentDescription(currentClass.classDescription);
-        book.SetPlace("Tabletop Corner");
+        book.placeLerper.SetPlace("Tabletop Corner");
         fire.brightness = 0.2f;
-        cameraController.SetView("Default");
-        if (book.toOpen) cameraController.SetView("Tabletop Corner");
-        else cameraController.SetView("Default");
+        cameraController.placeLerper.SetPlace("Default");
+        if (book.toOpen) cameraController.placeLerper.SetPlace("Tabletop Corner");
+        else cameraController.placeLerper.SetPlace("Default");
 
         // Leave on space
         if (Input.GetKeyDown(KeyCode.Space)) multiplayerManager.TryLeaveMatchmaking();

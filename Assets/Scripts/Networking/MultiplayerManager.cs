@@ -28,17 +28,19 @@ public class MultiplayerManager : MonoBehaviour
         instance = this;
     }
 
-    public void Init(string configFileName)
+
+    public void Init()
     {
         // Main initialization
-        InitConfig(configFileName);
+        InitConfig();
         if (isServer) InitServer_Serverside();
         else InitClient();
     }
 
-    private void InitConfig(string configFilePath)
+    private void InitConfig()
     {
-        System.IO.StreamReader reader = new System.IO.StreamReader(configFilePath);
+        String path = Application.dataPath + "\\config.cfg";
+        System.IO.StreamReader reader = new System.IO.StreamReader(path);
         UNetTransport unet = networkManager.GetComponent<UNetTransport>();
         String address = reader.ReadLine();
         String port = reader.ReadLine();

@@ -1,5 +1,21 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-352160125279773208
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ce0f027b61cdc140a02f59af1cacc29, type: 3}
+  m_Name: NewPixelizeFeature
+  m_EditorClassIdentifier: 
+  m_Active: 0
+  settings:
+    renderPassEvent: 550
+    screenHeight: 143
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12,8 +28,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de640fe3d0db1804a85f9fc8f5cadab6, type: 3}
   m_Name: URP Asset Renderer
   m_EditorClassIdentifier: 
-  m_RendererFeatures: []
-  m_RendererFeatureMap: 
+  m_RendererFeatures:
+  - {fileID: -352160125279773208}
+  m_RendererFeatureMap: e85da45c3be01cfb
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
   shaders:

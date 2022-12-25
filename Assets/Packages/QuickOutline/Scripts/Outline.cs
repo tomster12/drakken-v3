@@ -97,6 +97,16 @@ public class Outline : MonoBehaviour {
 
     // Apply material properties immediately
     needsUpdate = true;
+
+    foreach (var skinnedMeshRenderer in GetComponentsInChildren<SkinnedMeshRenderer>())
+    {
+        if (skinnedMeshRenderer.sharedMesh.subMeshCount > 1)
+        {
+            skinnedMeshRenderer.sharedMesh.subMeshCount = skinnedMeshRenderer.sharedMesh.subMeshCount + 1;
+            skinnedMeshRenderer.sharedMesh.SetTriangles(skinnedMeshRenderer.sharedMesh.triangles, skinnedMeshRenderer.sharedMesh.subMeshCount - 1);
+        }
+
+    }
   }
 
   void OnEnable() {

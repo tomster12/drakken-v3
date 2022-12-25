@@ -295,6 +295,7 @@ Material:
     m_Colors:
     - Color_71af374a253a4dc598018893f16d91ac: {r: 0.27058825, g: 0.22745098, b: 0.18039216,
         a: 0}
+    - Color_7e7d9e9ab1c04cb4a40201dd048f5a32: {r: 0, g: 0, b: 0, a: 0}
     - _BaseColor: {r: 0.2699999, g: 0.22810337, b: 0.18155164, a: 1}
     - _BaseColorMap_MipInfo: {r: 0, g: 0, b: 0, a: 0}
     - _Color: {r: 0.26999992, g: 0.2281034, b: 0.18155167, a: 1}

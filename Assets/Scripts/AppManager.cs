@@ -16,8 +16,9 @@ public class AppManager : MonoBehaviour
 
     private AppState state;
     [SerializeField] private AppStateMenu stateMenu;
+    [SerializeField] private AppStateSettings stateSettings;
     [SerializeField] private AppStateMatchmaker stateMatchmaker;
-    [SerializeField] private AppStateSelecting stateSelecting;
+    [SerializeField] private AppStateClassSelect stateClassSelect;
     [SerializeField] private AppStateIngame stateIngame;
 
 
@@ -34,7 +35,7 @@ public class AppManager : MonoBehaviour
         Matchmaker.OnCloseMatch += OnCloseMatch;
 
         // Main initialization
-        multiplayerManager.Init(Application.dataPath + "\\config.cfg");
+        multiplayerManager.Init();
         if (multiplayerManager.isServer) return;
         GotoFirstState();
     }
@@ -90,6 +91,7 @@ public class AppManager : MonoBehaviour
         [SerializeField] private float bookToOpenLerpSpeed = 1.5f;
         [SerializeField] private float bookOpeningToOpenThreshold = 0.8f;
 
+        private bool hoverCheck = false;
         private bool hasStarted = false;
         private bool bookInitialSet;
         private float bookTimeOffset;
@@ -98,17 +100,16 @@ public class AppManager : MonoBehaviour
         public override void Set()
         {
             // Initialize book state
-            app.cameraController.SetView("Default");
-            app.book.SetPlace("Tabletop Central");
+            app.cameraController.placeLerper.SetPlace("Default");
+            app.book.placeLerper.SetPlace("Tabletop Central");
+            app.book.placeLerper.inPositionThreshold = bookInPositionThreshold;
             app.book.toOpen = false;
             app.book.outlineAmount = 0.0f;
             app.book.glowAmount = 0.0f;
-            app.book.inPositionThreshold = bookInPositionThreshold;
             app.fire.brightness = 0.0f;
             menu.SetActive(false);
-            menu.onFizzled += GotoNext;
-
-            hasStarted = false;
+            menu.onClick += ClickOption;
+            menu.onSelect += SelectOption;
             bookInitialSet = false;
             bookTimeOffset = Time.time;
         }
@@ -116,16 +117,17 @@ public class AppManager : MonoBehaviour
         public void SetToBase()
         {
             // Set to base values
-            app.book.SetPlace("Tabletop Central", true);
+            app.book.placeLerper.SetPlace("Tabletop Central", true);
             app.fire.SetValues();
         }
 
         public override void Unset()
         {
-            menu.SetActive(false);
-            menu.onFizzled -= GotoNext;
             app.book.targetPct = 1.0f;
             app.book.openLerpSpeed = 3.0f;
+            menu.SetActive(false);
+            menu.onClick -= ClickOption;
+            menu.onSelect -= SelectOption;
         }
 
 
@@ -135,22 +137,27 @@ public class AppManager : MonoBehaviour
 
             if (!hasStarted)
             {
-                app.book.movementLerpSpeed = bookHoverLerpSpeed;
-                app.book.SetPlace("Tabletop Central");
+                app.book.placeLerper.positionlerpSpeed = bookHoverLerpSpeed;
+                app.book.placeLerper.SetPlace("Tabletop Central");
                 app.fire.brightness = 0.0f;
                 if (app.book.isHovered)
                 {
-                    app.book.targetPosOffset = bookHoverPosOffset;
-                    app.book.targetPosOffset += new Vector3(0.0f, Mathf.Sin(time / bookWaveDuration * Mathf.PI * 2f) * bookWaveMagnitude, 0.0f);
-                    app.book.targetRotOffset = bookHoverRotOffset;
+                    if (!hoverCheck)
+                    {
+                        hoverCheck = true;
+                        bookTimeOffset = Time.time;
+                    }
+                    app.book.placeLerper.SetOffsetPosition(bookHoverPosOffset + new Vector3(0.0f, Mathf.Sin(time / bookWaveDuration * Mathf.PI * 2f) * bookWaveMagnitude, 0.0f));
+                    app.book.placeLerper.SetOffsetRotation(bookHoverRotOffset);
                     app.book.outlineAmount = 1.0f;
                     app.book.glowAmount = 0.7f;
                     if (Input.GetMouseButtonDown(0)) hasStarted = true;
                 }
                 else
                 {
-                    app.book.targetPosOffset = Vector3.zero;
-                    app.book.targetRotOffset = Quaternion.identity;
+                    hoverCheck = false;
+                    app.book.placeLerper.SetOffsetPosition(Vector3.zero);
+                    app.book.placeLerper.SetOffsetRotation(Quaternion.identity);
                     app.book.outlineAmount = 0.0f;
                     app.book.glowAmount = 0.0f;
                 }
@@ -160,26 +167,26 @@ public class AppManager : MonoBehaviour
                 app.book.outlineAmount = 0.0f;
                 if (!bookInitialSet)
                 {
-                    app.book.movementLerpSpeed = bookOpeningLerpSpeed;
-                    app.book.targetPosOffset = bookOpeningPosOffset;
-                    app.book.targetRotOffset = Quaternion.Euler(0.0f, 0.0f, 3.5f);
+                    app.book.placeLerper.positionlerpSpeed = bookOpeningLerpSpeed;
+                    app.book.placeLerper.SetOffsetPosition(bookOpeningPosOffset);
+                    app.book.placeLerper.SetOffsetRotation(Quaternion.Euler(0.0f, 0.0f, 3.5f));
                     app.book.targetPct = 0.9f;
                     app.book.glowAmount = 0.9f;
                     app.book.openLerpSpeed = bookToOpenLerpSpeed;
                     app.book.toOpen = true;
                     app.fire.brightness = fireBrightnessOpening;
-                    bookInitialSet |= app.book.inPosition && (app.book.normalizedPct > bookOpeningToOpenThreshold);
+                    bookInitialSet |= app.book.placeLerper.inPosition && (app.book.normalizedPct > bookOpeningToOpenThreshold);
                     if (bookInitialSet) menu.SetActive(true);
                 }
                 else
                 {
-                    app.book.movementLerpSpeed = bookSelectingLerpSpeed;
-                    app.book.targetPosOffset = bookSelectingPosOffset;
-                    app.book.targetRotOffset = Quaternion.identity;
+                    app.book.placeLerper.positionlerpSpeed = bookSelectingLerpSpeed;
+                    app.book.placeLerper.SetOffsetPosition(bookSelectingPosOffset);
+                    app.book.placeLerper.SetOffsetRotation(Quaternion.identity);
                     app.book.targetPct = 1.0f;
                     app.book.glowAmount = 0.0f;
                     app.fire.brightness = fireBrightnessSelecting;
-                    if (menu.isSetup) app.fire.brightness = fireBrightnessSelecting;
+                    if (menu.state == Menu.State.SELECTING) app.fire.brightness = fireBrightnessSelecting;
                     if (menu.selectedIndex != -1) app.fire.brightness = fireBrightnessSelected;
                     else if (menu.hoveredIndex != -1) app.fire.brightness = fireBrightnessHovering;
                 }
@@ -187,7 +194,71 @@ public class AppManager : MonoBehaviour
         }
 
 
-        private void GotoNext() => app.GotoMatchmaker();
+        private void ClickOption(int index)
+        {
+            // Quit Button
+            if (index == 2)
+            {
+                #if UNITY_EDITOR
+                UnityEditor.EditorApplication.isPlaying = false;
+                #endif
+                Application.Quit();
+            }
+        }
+
+        private void SelectOption(int index)
+        {
+            // Play / Settings buttons
+            if (index == 0) app.GotoMatchmaker();
+            else if (index == 1) app.GotoSettings();
+        }
+    }
+
+    [Serializable]
+    public class AppStateSettings : AppState
+    {
+        [Header("References")]
+        [SerializeField] private Settings settings;
+
+        [Header("Config")]
+        [SerializeField] private float fireBrightnessIdle = 0.05f;
+        [SerializeField] private float fireBrightnessHover = 0.18f;
+        [SerializeField] private float movingBookOpenLerpSpeed = 4.0f;
+        [SerializeField] private float readyBookOpenLerpSpeed = 2.0f;
+        [SerializeField] private float bookMovementLerpSpeed = 5.0f;
+
+
+        public override void Set()
+        {
+            // Initialize book state
+            app.cameraController.placeLerper.SetPlace("Settings");
+            app.book.placeLerper.SetPlace("Fire Class Select");
+            app.book.glowAmount = 0.0f;
+            app.book.placeLerper.positionlerpSpeed = bookMovementLerpSpeed;
+            app.book.toOpen = false;
+            app.fire.brightness = fireBrightnessIdle;
+            settings.SetActive(false);
+        }
+
+        public override void Unset()
+        {
+            app.book.glowAmount = 0.0f;
+            settings.SetActive(false);
+        }
+
+
+        public override void Update()
+        {
+            // Update book and settings
+            app.book.toOpen = app.book.placeLerper.inPosition;
+            if (!app.book.toOpen) app.book.openLerpSpeed = movingBookOpenLerpSpeed;
+            else app.book.openLerpSpeed = readyBookOpenLerpSpeed;
+            bool ready = app.book.toOpen && app.book.normalizedPct > 0.5f;
+            settings.SetActive(ready);
+
+            // Go back once fizzled
+            if (settings.hasExited) app.GotoMenu();
+        }
     }
 
     [Serializable]
@@ -210,8 +281,8 @@ public class AppManager : MonoBehaviour
         public override void Set()
         {
             // Initialize book state
-            app.cameraController.SetView("Default");
-            app.book.SetPlace("Tabletop Central");
+            app.cameraController.placeLerper.SetPlace("Default");
+            app.book.placeLerper.SetPlace("Tabletop Central");
             bookTimeOffset = Time.time;
             matchmakingStatus = 0;
             app.fire.brightness = 0.0f;
@@ -220,7 +291,7 @@ public class AppManager : MonoBehaviour
         public void SetToBase()
         {
             // Set to base values
-            app.book.SetPlace("Tabletop Central", true);
+            app.book.placeLerper.SetPlace("Tabletop Central", true);
             app.fire.SetValues();
         }
 
@@ -241,29 +312,28 @@ public class AppManager : MonoBehaviour
             // Calculate target pos / rot
             float time = (Time.time - bookTimeOffset);
             float spinTime = (Time.time - bookSpinTimeOffset);
-            app.book.movementLerpSpeed = bookMovementLerpSpeed;
+            app.book.placeLerper.positionlerpSpeed = bookMovementLerpSpeed;
             if (matchmakingStatus != 0)
             {
-                app.book.SetPlace("Fire Loading");
-                if (app.book.inPosition && matchmakingStatus == 1) StartMatchmaking();
-                if (matchmakingStatus >= 1) app.book.targetRotOffset = Quaternion.AngleAxis(0.2f * spinTime * (360), app.book.transform.right);
+                app.book.placeLerper.SetPlace("Fire Loading");
+                if (app.book.placeLerper.inPosition && matchmakingStatus == 1) StartMatchmaking();
+                if (matchmakingStatus >= 1) app.book.placeLerper.SetOffsetRotation(Quaternion.AngleAxis(0.2f * spinTime * (360), app.book.transform.right));
                 app.fire.brightness = fireBrightnessLoading;
                 app.book.glowAmount = 0.0f;
             }
             else if (app.book.isHovered)
             {
-                app.book.SetPlace("Tabletop Central");
-                app.book.targetPosOffset = bookHoverPosOffset;
-                app.book.targetPosOffset += new Vector3(0.0f, Mathf.Sin(time / bookFloatDuration * Mathf.PI * 2f) * bookFloatMagnitude, 0.0f);
-                app.book.targetRotOffset = bookHoverRotOffset;
+                app.book.placeLerper.SetPlace("Tabletop Central");
+                app.book.placeLerper.SetOffsetPosition(bookHoverPosOffset + new Vector3(0.0f, Mathf.Sin(time / bookFloatDuration * Mathf.PI * 2f) * bookFloatMagnitude, 0.0f));
+                app.book.placeLerper.SetOffsetRotation(bookHoverRotOffset);
                 app.fire.brightness = fireBrightnessHover;
                 app.book.glowAmount = 1.0f;
             }
             else
             {
-                app.book.SetPlace("Tabletop Central");
-                app.book.targetPosOffset = Vector3.zero;
-                app.book.targetRotOffset = Quaternion.identity;
+                app.book.placeLerper.SetPlace("Tabletop Central");
+                app.book.placeLerper.SetOffsetPosition(Vector3.zero);
+                app.book.placeLerper.SetOffsetRotation(Quaternion.identity);
                 app.fire.brightness = fireBrightnessIdle;
                 app.book.glowAmount = 0.0f;
             }
@@ -317,7 +387,7 @@ public class AppManager : MonoBehaviour
             }
         }
 
-        private void GotoNext() => app.GotoSelecting();
+        private void GotoNext() => app.GotoClassSelect();
 
 
         public override void OnTryConnect(bool success)
@@ -370,7 +440,7 @@ public class AppManager : MonoBehaviour
     }
 
     [Serializable]
-    public class AppStateSelecting : AppState
+    public class AppStateClassSelect : AppState
     {
         [Header("References")]
         [SerializeField] private ClassSelect classSelect;
@@ -392,7 +462,7 @@ public class AppManager : MonoBehaviour
         public override void Set()
         {
             // Initialize book state
-            app.cameraController.SetView("Default");
+            app.cameraController.placeLerper.SetPlace("Default");
             inPositionSet = false;
             hasOpenedSet = false;
             bookTimeOffset = Time.time;
@@ -413,18 +483,18 @@ public class AppManager : MonoBehaviour
         {
             // Update state
             classSelect.SetActive(hasOpenedSet);
-            app.book.movementLerpSpeed = bookMovementLerpSpeed;
+            app.book.placeLerper.positionlerpSpeed = bookMovementLerpSpeed;
 
             // Handle logic for before class select is setup
             if (!classSelect.isSetup)
             {
                 // Update variables
                 app.fire.brightness = fireBrightnessSetup;
-                app.book.inPositionThreshold = bookInPositionThreshold;
-                app.book.targetPosOffset = new Vector3(0.0f, 0.8f, 0.0f);
-                app.book.SetPlace("Fire Class Select");
+                app.book.placeLerper.inPositionThreshold = bookInPositionThreshold;
+                app.book.placeLerper.SetPlace("Fire Class Select");
+                app.book.placeLerper.SetOffsetPosition(new Vector3(0.0f, 0.8f, 0.0f));
                 app.book.toOpen = inPositionSet;
-                inPositionSet |= app.book.inPosition;
+                inPositionSet |= app.book.placeLerper.inPosition;
                 hasOpenedSet |= inPositionSet && app.book.isOpen;
             }
 
@@ -439,11 +509,11 @@ public class AppManager : MonoBehaviour
                     float time = (Time.time - bookTimeOffset);
                     app.fire.brightness = fireBrightnessSelected;
                     app.book.toOpen = true;
-                    app.book.SetPlace("Fire Class View");
-                    app.book.targetPosOffset = new Vector3(0.0f, Mathf.Sin(time / bookFloatDuration * Mathf.PI * 2f) * bookFloatMagnitude, 0.0f);
+                    app.book.placeLerper.SetPlace("Fire Class View");
+                    app.book.placeLerper.SetOffsetPosition(new Vector3(0.0f, Mathf.Sin(time / bookFloatDuration * Mathf.PI * 2f) * bookFloatMagnitude, 0.0f));
                     app.book.SetContentTitle(selectedOption.optionClass.className);
                     app.book.SetContentDescription(selectedOption.optionClass.classDescription);
-                    app.cameraController.SetView("Fire Class View");
+                    app.cameraController.placeLerper.SetPlace("Fire Class View");
                 }
 
                 // Close book and set to default view
@@ -451,9 +521,9 @@ public class AppManager : MonoBehaviour
                 {
                     app.fire.brightness = fireBrightnessSelecting;
                     app.book.toOpen = false;
-                    app.book.SetPlace("Fire Class Select");
-                    app.book.targetPosOffset = Vector3.zero;
-                    app.cameraController.SetView("Default");
+                    app.book.placeLerper.SetPlace("Fire Class Select");
+                    app.book.placeLerper.SetOffsetPosition(Vector3.zero);
+                    app.cameraController.placeLerper.SetPlace("Default");
                 }
             }
 
@@ -523,10 +593,12 @@ public class AppManager : MonoBehaviour
 
     [ContextMenu("Goto Menu")]
     private void GotoMenu() => SetAppState(stateMenu);
+    [ContextMenu("Goto Settings")]
+    private void GotoSettings() => SetAppState(stateSettings);
     [ContextMenu("Goto Matchmaker")]
     private void GotoMatchmaker() => SetAppState(stateMatchmaker);
-    [ContextMenu("Goto Selecting")]
-    private void GotoSelecting() => SetAppState(stateSelecting);
+    [ContextMenu("Goto ClassSelect")]
+    private void GotoClassSelect() => SetAppState(stateClassSelect);
     [ContextMenu("Goto Ingame")]
     private void GotoIngame() => SetAppState(stateIngame);
 

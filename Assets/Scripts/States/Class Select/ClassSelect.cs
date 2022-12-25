@@ -7,6 +7,7 @@ public class ClassSelect : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private VisualToken[] options;
+    [SerializeField] private Transform startPosition;
 
     [Header("Config")]
     [SerializeField] private float circleRadius = 5f;
@@ -44,33 +45,12 @@ public class ClassSelect : MonoBehaviour
         isSetup = false;
         hasInteracted = false;
 
-        // Start setup stage
-        StartSetup();
-    }
-
-    private void StartSetup()
-    {
-        // Update variables
+        // Begin setup
         for (int i = 0; i < options.Length; i++)
         {
             options[i].SetActive(false);
-            options[i].lerper.toLerpPosition = false;
-            options[i].lerper.toLerpRotation = false;
+            options[i].lerper.SetTarget(startPosition.position, startPosition.rotation, true, true);
             options[i].toGlow = false;
-        }
-    }
-
-    private void StartSelecting()
-    {
-        // Update variables
-        isSetup = true;
-        currentScrollVel -= 1f / setupIntervalDuration;
-        for (int i = 0; i < options.Length; i++)
-        {
-            options[i].lerper.positionlerpSpeed = 15.0f;
-            options[i].lerper.rotationLerpSpeed = 15.0f;
-            options[i].lerper.toLerpPosition = true;
-            options[i].lerper.toLerpRotation = true;
         }
     }
 
@@ -103,14 +83,23 @@ public class ClassSelect : MonoBehaviour
             if (timeDiff >= startTime)
             {
                 float outwardPct = Mathf.Min(Mathf.Max((timeDiff - startTime) / setupOutwardDuration, 0.0f), 1f);
-                options[i].lerper.targetPosition = GetOptionSetupPosition(i, outwardPct, setupScroll);
-                options[i].lerper.targetRotation = GetOptionSetupRotation(i, outwardPct, setupScroll);
+                options[i].lerper.SetTargetPosition(GetOptionSetupPosition(i, outwardPct, setupScroll), true);
+                options[i].lerper.SetTargetRotation(GetOptionSetupRotation(i, outwardPct, setupScroll), true);
                 options[i].SetActive(true);
             }
         }
 
-        // Check if is setup
-        if (timeDiff > ((options.Length - 1) * setupIntervalDuration + setupOutwardDuration)) StartSelecting();
+        // Begin selecting
+        if (timeDiff > ((options.Length - 1) * setupIntervalDuration + setupOutwardDuration))
+        {
+            isSetup = true;
+            currentScrollVel -= 1f / setupIntervalDuration;
+            for (int i = 0; i < options.Length; i++)
+            {
+                options[i].lerper.positionlerpSpeed = 15.0f;
+                options[i].lerper.rotationLerpSpeed = 15.0f;
+            }
+        }
     }
 
     private void UpdateSelecting()
@@ -122,21 +111,22 @@ public class ClassSelect : MonoBehaviour
         if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space)) newSelectedIndex = -1;
         for (int i = 0; i < options.Length; i++)
         {
-            options[i].lerper.targetPosition = GetOptionSelectingPosition(i, currentScroll);
-            options[i].lerper.targetRotation = GetOptionSelectingRotation(i, currentScroll);
+            Vector3 position = GetOptionSelectingPosition(i, currentScroll);
             if (options[i].isHovered)
             {
                 if (selectedIndex == i)
                 {
-                    options[i].lerper.targetPosition += Vector3.up * playHoverHeight;
+                    position += Vector3.up * playHoverHeight;
                     if (Input.GetMouseButtonDown(0) && onSelectClass != null) onSelectClass(options[i].optionClass);
                 }
                 else
                 {
-                    options[i].lerper.targetPosition += Vector3.up * selectedHoverHeight;
+                    position += Vector3.up * selectedHoverHeight;
                     if (Input.GetMouseButtonDown(0)) newSelectedIndex = i;
                 }
             }
+            options[i].lerper.SetTargetPosition(position);
+            options[i].lerper.SetTargetRotation(GetOptionSelectingRotation(i, currentScroll));
         }
 
         // Update selected token
@@ -208,3 +198,4 @@ public class ClassSelect : MonoBehaviour
         if (isActive) Reset();
     } 
 }
+
