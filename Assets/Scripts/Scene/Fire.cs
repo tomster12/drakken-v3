@@ -40,6 +40,7 @@ public class Fire : MonoBehaviour
     }
 
 
+    [ContextMenu("Set Values")]
     public void SetValues()
     {
         light1.intensity = FunkyLerp(light1.intensity, l1IntensityStart, l1IntensityEnd, brightness, lerpSpeed, true);

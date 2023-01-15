@@ -9,6 +9,7 @@ public class Settings : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private VisualToken exitToken;
+    [SerializeField] private Transform follow;
     [SerializeField] private Transform start;
     [SerializeField] private Transform target;
 
@@ -34,6 +35,7 @@ public class Settings : MonoBehaviour
     private void Update()
     {
         if (!isActive) return;
+        transform.position = follow.position;
 
         // Handle fizzling
         hasExited = exitToken.fizzler.hasFizzled;
@@ -66,7 +68,11 @@ public class Settings : MonoBehaviour
         // Update variables
         isActive = isActive_;
         hasExited = false;
+        transform.position = follow.position;
+        transform.rotation = follow.rotation;
         exitToken.transform.position = start.position;
+        exitToken.transform.rotation = target.rotation;
+        if (gameObject.activeSelf != isActive_) gameObject.SetActive(isActive);
         exitToken.SetActive(isActive);
         exitToken.fizzler.Reset();
     }

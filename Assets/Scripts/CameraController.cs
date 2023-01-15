@@ -10,7 +10,6 @@ public class CameraController : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private Camera cam;
-    [SerializeField] private Transform[] viewsList;
     [SerializeField] private PlaceLerper _placeLerper;
     public PlaceLerper placeLerper => _placeLerper;
 

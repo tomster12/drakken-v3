@@ -14,6 +14,8 @@ public class ClassSelect : MonoBehaviour
     [SerializeField] private float circleOffset = 4f;
     [SerializeField] private float setupIntervalDuration = 0.3f;
     [SerializeField] private float setupOutwardDuration = 0.65f;
+    [SerializeField] private float oscillateFreq = 3.0f;
+    [SerializeField] private float oscillateMag = 0.45f;
     [SerializeField] private float idleScrollVel = 1.5f;
     [SerializeField] private float selectedScrollVel = 5f;
     [SerializeField] private float playHoverHeight = 0.5f;
@@ -46,6 +48,8 @@ public class ClassSelect : MonoBehaviour
         hasInteracted = false;
 
         // Begin setup
+        transform.position = startPosition.position;
+        transform.rotation = startPosition.rotation;
         for (int i = 0; i < options.Length; i++)
         {
             options[i].SetActive(false);
@@ -66,6 +70,8 @@ public class ClassSelect : MonoBehaviour
     private void UpdateSetup()
     {
         if (!isActive || isSetup) return;
+        transform.position = startPosition.position;
+        transform.rotation = startPosition.rotation;
 
         // Calculate setup scroll for fancy swil
         // - new token every 0.2s
@@ -105,13 +111,15 @@ public class ClassSelect : MonoBehaviour
     private void UpdateSelecting()
     {
         if (!isActive || !isSetup) return;
+        transform.position = startPosition.position;
+        transform.rotation = startPosition.rotation;
 
         // Update each token
-        int newSelectedIndex = selectedIndex;
-        if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space)) newSelectedIndex = -1;
+        if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space)) selectedIndex = -1;
         for (int i = 0; i < options.Length; i++)
         {
-            Vector3 position = GetOptionSelectingPosition(i, currentScroll);
+            Vector3 position = GetOptionSelectingPosition(i, currentScroll, selectedIndex != i);
+            options[i].toGlow = options[i].isHovered || selectedIndex == i;
             if (options[i].isHovered)
             {
                 if (selectedIndex == i)
@@ -122,20 +130,15 @@ public class ClassSelect : MonoBehaviour
                 else
                 {
                     position += Vector3.up * selectedHoverHeight;
-                    if (Input.GetMouseButtonDown(0)) newSelectedIndex = i;
+                    if (Input.GetMouseButtonDown(0))
+                    {
+                        selectedIndex = i;
+                        hasInteracted |= selectedIndex != -1;
+                    }
                 }
-            }
+            } else if (selectedIndex == i) position += Vector3.up * selectedHoverHeight;
             options[i].lerper.SetTargetPosition(position);
             options[i].lerper.SetTargetRotation(GetOptionSelectingRotation(i, currentScroll));
-        }
-
-        // Update selected token
-        if (newSelectedIndex != selectedIndex)
-        {
-            if (selectedIndex != -1) options[selectedIndex].toGlow = false;
-            if (newSelectedIndex != -1) options[newSelectedIndex].toGlow = true;
-            selectedIndex = newSelectedIndex;
-            hasInteracted |= selectedIndex != -1;
         }
 
         // Scroll towards selected index
@@ -167,14 +170,16 @@ public class ClassSelect : MonoBehaviour
         return Quaternion.Lerp(Quaternion.identity, GetOptionSelectingRotation(index, scroll), pct);
     }
 
-    private Vector3 GetOptionSelectingPosition(float index, float scroll)
+    private Vector3 GetOptionSelectingPosition(float index, float scroll, bool toOscillate=true)
     {
         // Return end token position with given scroll
-        float angle = -((float)(index + scroll) / options.Length) * Mathf.PI * 2f;
+        float angle = (-(float)(index + scroll) / options.Length - 0.25f) * Mathf.PI * 2f;
         Vector3 start = transform.position + generationOffset;
         Vector3 offset = new Vector3(
             Mathf.Cos(angle) * circleRadius,
-            Mathf.Sin(angle * 3f + Time.time) * 0.2f + circleOffset,
+            toOscillate
+                ? (Mathf.Sin(angle * oscillateFreq + Time.time) * oscillateMag + circleOffset)
+                : (oscillateMag * 0.5f + circleOffset),
             Mathf.Sin(angle) * circleRadius);
         return start + offset;
     }
@@ -182,7 +187,7 @@ public class ClassSelect : MonoBehaviour
     private Quaternion GetOptionSelectingRotation(float index, float scroll = 0f)
     {
         // Generate angle pointing outwards
-        float angle = ((float)(index + scroll) / options.Length) * 360f - 90f;
+        float angle = ((float)(index + scroll) / options.Length + 0.25f) * 360f - 90f;
         return Quaternion.Euler(-25f, angle, 0f);
     }
 
@@ -198,4 +203,3 @@ public class ClassSelect : MonoBehaviour
         if (isActive) Reset();
     } 
 }
-

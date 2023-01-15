@@ -26,7 +26,6 @@ public class Menu : MonoBehaviour
     [SerializeField] private float optionHoverHeight = 1.4f;
     [SerializeField] private float optionSelectedHeight = 2.5f;
     private float timeStart;
-    private float setupStart;
 
     public int hoveredIndex { get; private set; } = -1;
     public int selectedIndex { get; private set; } = -1;
@@ -50,9 +49,10 @@ public class Menu : MonoBehaviour
     private void SetStateSetup()
     {
         // Update tokens
-        setupStart = Time.time;
         for (int i = 0; i < options.Length; i++)
         {
+            transform.position = startTransform.position;
+            transform.rotation = startTransform.rotation;
             options[i].transform.position = startTransform.position;
             options[i].transform.rotation = startTransform.rotation;
             options[i].lerper.positionlerpSpeed = setupPositionLerpSpeed;
@@ -69,7 +69,6 @@ public class Menu : MonoBehaviour
     private void SetStateSelecting()
     {
         // Update variables
-        setupStart = Time.time;
         for (int i = 0; i < options.Length; i++)
         {
             options[i].lerper.positionlerpSpeed = selectingRotationLerpSpeed;
@@ -109,6 +108,8 @@ public class Menu : MonoBehaviour
     {
         if (state != State.SETUP) return;
         float timeDiff = Time.time - timeStart;
+        transform.position = startTransform.position;
+        transform.rotation = startTransform.rotation;
 
         // Update all options
         for (int i = 0; i < options.Length; i++)
@@ -127,7 +128,13 @@ public class Menu : MonoBehaviour
                     options[i].toGlow = true;
                     if (Input.GetMouseButtonDown(0)) Select(i);
                 }
-                else options[i].toGlow = false;
+
+                // Otherwise oscillate
+                else
+                {
+                    target += new Vector3(0.0f, Mathf.Sin((timeDiff / optionHoverDuration - i * optionHoverOffset) * Mathf.PI * 2f) * optionHoverMagnitude, 0.0f);
+                    options[i].toGlow = false;
+                }
 
                 // Update positions
                 float outwardPct = Mathf.Min(Mathf.Max((timeDiff - startTime) / setupOutwardDuration, 0.0f), 1f);
@@ -144,7 +151,9 @@ public class Menu : MonoBehaviour
     private void UpdateSelecting()
     {
         if (state != State.SELECTING) return;
-        float timeDiff = Time.time - setupStart;
+        float timeDiff = Time.time - timeStart;
+        transform.position = startTransform.position;
+        transform.rotation = startTransform.rotation;
 
         // Update all options
         hoveredIndex = -1;
@@ -207,7 +216,6 @@ public class Menu : MonoBehaviour
 
         // Update variables and reset
         isActive = isActive_;
-        Debug.Log("Setting menu to " + isActive);
         if (gameObject.activeSelf != isActive_) gameObject.SetActive(isActive);
         for (int i = 0; i < options.Length; i++) options[i].SetActive(false);
         if (isActive) Reset();

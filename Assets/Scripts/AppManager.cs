@@ -77,13 +77,20 @@ public class AppManager : MonoBehaviour
         [SerializeField] private Vector3 bookHoverPosOffset = new Vector3(0.0f, 2f, 0.0f);
         [SerializeField] private Quaternion bookHoverRotOffset = Quaternion.Euler(-10f, 0.0f, 0.0f);
         [SerializeField] private Vector3 bookOpeningPosOffset = new Vector3(0.0f, 3f, 0.0f);
+        [SerializeField] private Quaternion bookOpeningRotOffset = Quaternion.Euler(0.0f, 0.0f, -17f);
         [SerializeField] private Vector3 bookSelectingPosOffset = new Vector3(0.0f, 1f, 0.0f);
+        [SerializeField] private string camPlace = "Tabletop Default";
+        [SerializeField] private string camPlaceSelected = "Floor Close Up";
+        [SerializeField] private string bookPlace = "Tabletop Central";
         [SerializeField] private float bookWaveDuration = 1.65f;
         [SerializeField] private float bookWaveMagnitude = 0.25f;
         [SerializeField] private float bookHoverLerpSpeed = 3.0f;
-        [SerializeField] private float bookOpeningLerpSpeed = 1.75f;
-        [SerializeField] private float bookSelectingLerpSpeed = 6.0f;
+        [SerializeField] private float bookOpeningPosLerpSpeed = 5f;
+        [SerializeField] private float bookOpeningRotLerpSpeed = 10.0f;
+        [SerializeField] private float bookSelectingPosLerpSpeed = 6.0f;
+        [SerializeField] private float bookSelectingRotLerpSpeed = 15.0f;
         [SerializeField] private float bookInPositionThreshold = 0.2f;
+        [SerializeField] private float bookGlowLerpSpeed = 3.5f;
         [SerializeField] private float fireBrightnessOpening = 0.3f;
         [SerializeField] private float fireBrightnessSelecting = 0.1f;
         [SerializeField] private float fireBrightnessHovering = 0.25f;
@@ -100,8 +107,8 @@ public class AppManager : MonoBehaviour
         public override void Set()
         {
             // Initialize book state
-            app.cameraController.placeLerper.SetPlace("Default");
-            app.book.placeLerper.SetPlace("Tabletop Central");
+            app.cameraController.placeLerper.SetPlace(camPlace);
+            app.book.placeLerper.SetPlace(bookPlace);
             app.book.placeLerper.inPositionThreshold = bookInPositionThreshold;
             app.book.toOpen = false;
             app.book.outlineAmount = 0.0f;
@@ -117,7 +124,8 @@ public class AppManager : MonoBehaviour
         public void SetToBase()
         {
             // Set to base values
-            app.book.placeLerper.SetPlace("Tabletop Central", true);
+            app.book.placeLerper.SetPlace(bookPlace, true);
+            app.book.glowLerpSpeed = bookGlowLerpSpeed;
             app.fire.SetValues();
         }
 
@@ -137,8 +145,8 @@ public class AppManager : MonoBehaviour
 
             if (!hasStarted)
             {
+                app.cameraController.placeLerper.SetPlace(camPlace);
                 app.book.placeLerper.positionlerpSpeed = bookHoverLerpSpeed;
-                app.book.placeLerper.SetPlace("Tabletop Central");
                 app.fire.brightness = 0.0f;
                 if (app.book.isHovered)
                 {
@@ -165,11 +173,13 @@ public class AppManager : MonoBehaviour
             else
             {
                 app.book.outlineAmount = 0.0f;
+                app.cameraController.placeLerper.SetPlace(camPlaceSelected);
                 if (!bookInitialSet)
                 {
-                    app.book.placeLerper.positionlerpSpeed = bookOpeningLerpSpeed;
+                    app.book.placeLerper.positionlerpSpeed = bookOpeningPosLerpSpeed;
+                    app.book.placeLerper.rotationLerpSpeed = bookOpeningRotLerpSpeed;
                     app.book.placeLerper.SetOffsetPosition(bookOpeningPosOffset);
-                    app.book.placeLerper.SetOffsetRotation(Quaternion.Euler(0.0f, 0.0f, 3.5f));
+                    app.book.placeLerper.SetOffsetRotation(bookOpeningRotOffset);
                     app.book.targetPct = 0.9f;
                     app.book.glowAmount = 0.9f;
                     app.book.openLerpSpeed = bookToOpenLerpSpeed;
@@ -180,7 +190,8 @@ public class AppManager : MonoBehaviour
                 }
                 else
                 {
-                    app.book.placeLerper.positionlerpSpeed = bookSelectingLerpSpeed;
+                    app.book.placeLerper.positionlerpSpeed = bookSelectingPosLerpSpeed;
+                    app.book.placeLerper.rotationLerpSpeed = bookSelectingRotLerpSpeed;
                     app.book.placeLerper.SetOffsetPosition(bookSelectingPosOffset);
                     app.book.placeLerper.SetOffsetRotation(Quaternion.identity);
                     app.book.targetPct = 1.0f;
@@ -226,13 +237,15 @@ public class AppManager : MonoBehaviour
         [SerializeField] private float movingBookOpenLerpSpeed = 4.0f;
         [SerializeField] private float readyBookOpenLerpSpeed = 2.0f;
         [SerializeField] private float bookMovementLerpSpeed = 5.0f;
+        [SerializeField] private string camPlace = "Settings";
+        [SerializeField] private string bookPlace = "Fire Class Select";
 
 
         public override void Set()
         {
             // Initialize book state
-            app.cameraController.placeLerper.SetPlace("Settings");
-            app.book.placeLerper.SetPlace("Fire Class Select");
+            app.cameraController.placeLerper.SetPlace(camPlace);
+            app.book.placeLerper.SetPlace(bookPlace);
             app.book.glowAmount = 0.0f;
             app.book.placeLerper.positionlerpSpeed = bookMovementLerpSpeed;
             app.book.toOpen = false;
@@ -273,6 +286,9 @@ public class AppManager : MonoBehaviour
         [SerializeField] private float fireBrightnessIdle = 0.05f;
         [SerializeField] private float fireBrightnessHover = 0.18f;
         [SerializeField] private float fireBrightnessLoading = 0.28f;
+        [SerializeField] private string camPlace = "Default";
+        [SerializeField] private string bookPlaceWait = "Tabletop Central";
+        [SerializeField] private string bookPlaceLoading = "Fire Loading";
         private float bookTimeOffset;
         private float bookSpinTimeOffset;
         private int matchmakingStatus = 0;
@@ -281,8 +297,8 @@ public class AppManager : MonoBehaviour
         public override void Set()
         {
             // Initialize book state
-            app.cameraController.placeLerper.SetPlace("Default");
-            app.book.placeLerper.SetPlace("Tabletop Central");
+            app.cameraController.placeLerper.SetPlace(camPlace);
+            app.book.placeLerper.SetPlace(bookPlaceWait);
             bookTimeOffset = Time.time;
             matchmakingStatus = 0;
             app.fire.brightness = 0.0f;
@@ -291,7 +307,7 @@ public class AppManager : MonoBehaviour
         public void SetToBase()
         {
             // Set to base values
-            app.book.placeLerper.SetPlace("Tabletop Central", true);
+            app.book.placeLerper.SetPlace(bookPlaceWait, true);
             app.fire.SetValues();
         }
 
@@ -315,7 +331,7 @@ public class AppManager : MonoBehaviour
             app.book.placeLerper.positionlerpSpeed = bookMovementLerpSpeed;
             if (matchmakingStatus != 0)
             {
-                app.book.placeLerper.SetPlace("Fire Loading");
+                app.book.placeLerper.SetPlace(bookPlaceLoading);
                 if (app.book.placeLerper.inPosition && matchmakingStatus == 1) StartMatchmaking();
                 if (matchmakingStatus >= 1) app.book.placeLerper.SetOffsetRotation(Quaternion.AngleAxis(0.2f * spinTime * (360), app.book.transform.right));
                 app.fire.brightness = fireBrightnessLoading;
@@ -323,7 +339,7 @@ public class AppManager : MonoBehaviour
             }
             else if (app.book.isHovered)
             {
-                app.book.placeLerper.SetPlace("Tabletop Central");
+                app.book.placeLerper.SetPlace(bookPlaceWait);
                 app.book.placeLerper.SetOffsetPosition(bookHoverPosOffset + new Vector3(0.0f, Mathf.Sin(time / bookFloatDuration * Mathf.PI * 2f) * bookFloatMagnitude, 0.0f));
                 app.book.placeLerper.SetOffsetRotation(bookHoverRotOffset);
                 app.fire.brightness = fireBrightnessHover;
@@ -331,7 +347,7 @@ public class AppManager : MonoBehaviour
             }
             else
             {
-                app.book.placeLerper.SetPlace("Tabletop Central");
+                app.book.placeLerper.SetPlace(bookPlaceWait);
                 app.book.placeLerper.SetOffsetPosition(Vector3.zero);
                 app.book.placeLerper.SetOffsetRotation(Quaternion.identity);
                 app.fire.brightness = fireBrightnessIdle;
@@ -453,6 +469,11 @@ public class AppManager : MonoBehaviour
         [SerializeField] private float fireBrightnessSetup = 0.8f;
         [SerializeField] private float fireBrightnessSelected = 0.7f;
         [SerializeField] private float fireBrightnessSelecting = 0.35f;
+        [SerializeField] private string camPlace = "Default";
+        [SerializeField] private string camPlaceView = "Fire Class View";
+        [SerializeField] private string bookPlaceSelect = "Fire Class Select";
+        [SerializeField] private string bookPlaceView = "Fire Class View";
+        [SerializeField] private VisualToken selectedOption;
         private bool inPositionSet;
         private bool hasOpenedSet;
         private float bookTimeOffset;
@@ -462,7 +483,7 @@ public class AppManager : MonoBehaviour
         public override void Set()
         {
             // Initialize book state
-            app.cameraController.placeLerper.SetPlace("Default");
+            app.cameraController.placeLerper.SetPlace(camPlace);
             inPositionSet = false;
             hasOpenedSet = false;
             bookTimeOffset = Time.time;
@@ -482,7 +503,8 @@ public class AppManager : MonoBehaviour
         public override void Update()
         {
             // Update state
-            classSelect.SetActive(hasOpenedSet);
+            app.cameraController.placeLerper.SetPlace(camPlace);
+            classSelect.SetActive(hasOpenedSet);    
             app.book.placeLerper.positionlerpSpeed = bookMovementLerpSpeed;
 
             // Handle logic for before class select is setup
@@ -491,7 +513,7 @@ public class AppManager : MonoBehaviour
                 // Update variables
                 app.fire.brightness = fireBrightnessSetup;
                 app.book.placeLerper.inPositionThreshold = bookInPositionThreshold;
-                app.book.placeLerper.SetPlace("Fire Class Select");
+                app.book.placeLerper.SetPlace(bookPlaceSelect);
                 app.book.placeLerper.SetOffsetPosition(new Vector3(0.0f, 0.8f, 0.0f));
                 app.book.toOpen = inPositionSet;
                 inPositionSet |= app.book.placeLerper.inPosition;
@@ -501,7 +523,7 @@ public class AppManager : MonoBehaviour
             // Handle logic for once class select is setup
             else
             {
-                VisualToken selectedOption = classSelect.GetSelectedOption();
+                selectedOption = classSelect.GetSelectedOption();
 
                 // Show current tokens information
                 if (selectedOption != null)
@@ -509,11 +531,11 @@ public class AppManager : MonoBehaviour
                     float time = (Time.time - bookTimeOffset);
                     app.fire.brightness = fireBrightnessSelected;
                     app.book.toOpen = true;
-                    app.book.placeLerper.SetPlace("Fire Class View");
+                    app.book.placeLerper.SetPlace(bookPlaceView);
                     app.book.placeLerper.SetOffsetPosition(new Vector3(0.0f, Mathf.Sin(time / bookFloatDuration * Mathf.PI * 2f) * bookFloatMagnitude, 0.0f));
                     app.book.SetContentTitle(selectedOption.optionClass.className);
                     app.book.SetContentDescription(selectedOption.optionClass.classDescription);
-                    app.cameraController.placeLerper.SetPlace("Fire Class View");
+                    app.cameraController.placeLerper.SetPlace(camPlaceView);
                 }
 
                 // Close book and set to default view
@@ -521,9 +543,9 @@ public class AppManager : MonoBehaviour
                 {
                     app.fire.brightness = fireBrightnessSelecting;
                     app.book.toOpen = false;
-                    app.book.placeLerper.SetPlace("Fire Class Select");
+                    app.book.placeLerper.SetPlace(bookPlaceSelect);
                     app.book.placeLerper.SetOffsetPosition(Vector3.zero);
-                    app.cameraController.placeLerper.SetPlace("Default");
+                    app.cameraController.placeLerper.SetPlace(camPlace);
                 }
             }
 

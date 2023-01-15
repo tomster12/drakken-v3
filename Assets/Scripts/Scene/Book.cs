@@ -20,7 +20,6 @@ public class Book : MonoBehaviour
 
     [Header("Config")]
     [SerializeField] private float glowIntensity = 50.0f;
-    [SerializeField] private float glowLerpSpeed = 3.0f;
     [SerializeField] private Color outlineColor = new Color(200.0f, 100.0f, 100.0f, 255.0f);
     [SerializeField] private float outlineLerpSpeed = 3.0f;
 
@@ -28,6 +27,7 @@ public class Book : MonoBehaviour
 
     public float targetPct = 1.0f;
     public float glowAmount = 0.0f;
+    public float glowLerpSpeed = 3.0f;
     public float outlineAmount = 0.0f;
     public float openLerpSpeed = 1.0f;
     public float openThreshold = 0.02f;
