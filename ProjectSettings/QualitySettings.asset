@@ -43,6 +43,7 @@ QualitySettings:
     customRenderPipeline: {fileID: 0}
     excludedTargetPlatforms:
     - WebGL
+    - Standalone
   - serializedVersion: 2
     name: Low
     pixelLightCount: 0
@@ -80,6 +81,7 @@ QualitySettings:
     customRenderPipeline: {fileID: 0}
     excludedTargetPlatforms:
     - WebGL
+    - Standalone
   - serializedVersion: 2
     name: Medium
     pixelLightCount: 1
@@ -117,6 +119,7 @@ QualitySettings:
     customRenderPipeline: {fileID: 0}
     excludedTargetPlatforms:
     - WebGL
+    - Standalone
   - serializedVersion: 2
     name: High
     pixelLightCount: 2
@@ -154,6 +157,7 @@ QualitySettings:
     customRenderPipeline: {fileID: 0}
     excludedTargetPlatforms:
     - WebGL
+    - Standalone
   - serializedVersion: 2
     name: Very High
     pixelLightCount: 3
@@ -191,6 +195,7 @@ QualitySettings:
     customRenderPipeline: {fileID: 0}
     excludedTargetPlatforms:
     - WebGL
+    - Standalone
   - serializedVersion: 2
     name: Ultra
     pixelLightCount: 4
