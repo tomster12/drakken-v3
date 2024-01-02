@@ -1,6 +1,4 @@
-﻿
-using UnityEngine;
-
+﻿using UnityEngine;
 
 [CreateAssetMenu(fileName = "Class Data", menuName = "Scriptables/ClassData")]
 public class ClassData : ScriptableObject

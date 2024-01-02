@@ -1,6 +1,4 @@
-﻿
-using UnityEngine;
-
+﻿using UnityEngine;
 
 [CreateAssetMenu(fileName = "TokenData", menuName = "Scriptables/TokenData")]
 public class TokenData : ScriptableObject
