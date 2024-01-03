@@ -1,10 +1,8 @@
-﻿
-using UnityEngine;
-
+﻿using UnityEngine;
 
 public class TitleHover : MonoBehaviour
 {
-    // Declare variables
+    
     [Header("Config")]
     [SerializeField] private float floatDuration = 1.65f;
     [SerializeField] private float floatMagnitude = 0.1f;
@@ -12,14 +10,12 @@ public class TitleHover : MonoBehaviour
     private float timeOffset;
     private float initialY;
 
-
     private void Awake()
     {
         // Initialize variables
         timeOffset = Time.time;
         initialY = transform.position.y;
     }
-
 
     private void Update()
     {

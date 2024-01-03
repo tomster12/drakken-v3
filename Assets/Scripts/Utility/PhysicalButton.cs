@@ -1,9 +1,10 @@
-﻿
-using UnityEngine;
-
+﻿using UnityEngine;
 
 public class PhysicalButton : MonoBehaviour
 {
+    protected virtual void Click()
+    { }
+
     [Header("Config")]
     [SerializeField] private float hoverY = 0.4f;
     [SerializeField] private float heldY = -0.15f;
@@ -14,7 +15,6 @@ public class PhysicalButton : MonoBehaviour
     private bool isHovered;
     private bool isHeld;
 
-
     private void Awake()
     {
         // Initialize variables
@@ -22,7 +22,6 @@ public class PhysicalButton : MonoBehaviour
         isHovered = false;
         isHeld = false;
     }
-
 
     private void Update()
     {
@@ -46,11 +45,8 @@ public class PhysicalButton : MonoBehaviour
         transform.position = currentPosition;
     }
 
-
-    protected virtual void Click() {}
-
-
     // Handle hovering
     private void OnMouseOver() => isHovered = true;
+
     private void OnMouseExit() => isHovered = false;
 }

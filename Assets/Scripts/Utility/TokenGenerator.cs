@@ -1,15 +1,19 @@
-﻿
-using UnityEngine;
-
+﻿using UnityEngine;
 
 [ExecuteInEditMode]
 public class TokenGenerator : MonoBehaviour
 {
-    // Declare variables
+    public void SetToken(TokenData token_)
+    {
+        // Initialize variables
+        token = token_;
+        UpdateMesh();
+    }
+
+    
     [Header("References")]
     [SerializeField] private TokenData token;
     [SerializeField] private MeshFilter filter;
-
 
     private void Update() => UpdateMesh();
 
@@ -23,13 +27,5 @@ public class TokenGenerator : MonoBehaviour
         {
             filter.sharedMesh = token.tokenMesh;
         }
-    }
-
-
-    public void SetToken(TokenData token_)
-    {
-        // Initialize variables
-        token = token_;
-        UpdateMesh();
     }
 }

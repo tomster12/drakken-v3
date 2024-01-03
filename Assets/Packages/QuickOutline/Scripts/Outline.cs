@@ -14,8 +14,6 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class Outline : MonoBehaviour
 {
-    private static HashSet<Mesh> registeredMeshes = new HashSet<Mesh>();
-
     public enum Mode
     {
         OutlineAll,
@@ -55,12 +53,7 @@ public class Outline : MonoBehaviour
         }
     }
 
-    [Serializable]
-    private class ListVector3
-    {
-        public List<Vector3> data;
-    }
-
+    private static HashSet<Mesh> registeredMeshes = new HashSet<Mesh>();
     [SerializeField]
     private Mode outlineMode;
 
@@ -82,7 +75,9 @@ public class Outline : MonoBehaviour
     private List<ListVector3> bakeValues = new List<ListVector3>();
 
     private Renderer[] renderers;
+
     private Material outlineMaskMaterial;
+
     private Material outlineFillMaterial;
 
     private bool needsUpdate;
@@ -303,5 +298,11 @@ public class Outline : MonoBehaviour
                 outlineFillMaterial.SetFloat("_OutlineWidth", 0);
                 break;
         }
+    }
+
+    [Serializable]
+    private class ListVector3
+    {
+        public List<Vector3> data;
     }
 }
