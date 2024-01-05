@@ -2,19 +2,19 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// TODO: Fix
 public class GameManager : MonoBehaviour
 {
-
     public static GameManager instance { get; private set; }
 
-    public void EnterGame(ClassData currentClass_, Client.AppStateIngame appState_)
+    public void EnterGame(ClassData currentClass_, ClientStateIngame clientState_)
     {
         if (isActive) return;
 
         // Update variables
         if (!gameObject.activeSelf) gameObject.SetActive(true);
         currentClass = currentClass_;
-        appState = appState_;
+        clientState = clientState_;
         isActive = true;
 
         // Ready up
@@ -29,7 +29,7 @@ public class GameManager : MonoBehaviour
         if (isActive) StopGame();
         if (gameObject.activeSelf) gameObject.SetActive(false);
         currentClass = null;
-        appState = null;
+        clientState = null;
         isActive = false;
     }
 
@@ -63,11 +63,10 @@ public class GameManager : MonoBehaviour
     [Header("References")]
     [SerializeField] private HoverChild cornerViewHover;
     [SerializeField] private CameraController cameraController;
-    [SerializeField] private MultiplayerManager multiplayerManager;
     [SerializeField] private Fire fire;
     [SerializeField] private Book book;
 
-    [SerializeField] private Client.AppStateIngame appState;
+    [SerializeField] private ClientStateIngame clientState;
     [SerializeField] private TokenData[] potentialTokens;
     [SerializeField] private Transform diceRollTransform;
     [SerializeField] private GameBoard localBoard;
@@ -81,7 +80,6 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        // Singleton handling
         if (instance != null) return;
         instance = this;
     }
@@ -105,7 +103,7 @@ public class GameManager : MonoBehaviour
         else cameraController.Waypointer.SetPlace("Default");
 
         // Leave on space
-        if (Input.GetKeyDown(KeyCode.Space)) multiplayerManager.TryLeaveMatchmaking();
+        if (Input.GetKeyDown(KeyCode.Space)) Matchmaker.Instance.TryLeaveMatchmaking();
     }
 
     private void RollDice(int count, bool reset = true) => StartCoroutine(RollDiceIE(count, reset));

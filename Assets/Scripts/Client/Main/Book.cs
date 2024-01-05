@@ -63,6 +63,7 @@ public class Book : MonoBehaviour
 
     private void Start()
     {
+        Waypointer.Init(transform);
         SetContentTitle("");
         SetContentDescription("");
         Waypointer.SetPlace("Default");

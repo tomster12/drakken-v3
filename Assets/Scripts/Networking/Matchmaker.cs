@@ -5,27 +5,26 @@ using UnityEngine;
 
 public class Matchmaker : NetworkBehaviour
 {
-    public static Action OnSpawn;
-    public static Action<bool> OnFindMatch;
-    public static Action OnCloseMatch;
     public static Matchmaker Instance { get; private set; }
+    public static Action OnSpawn = () => { };
+    public static Action<bool> OnFindMatch = (bool found) => { };
+    public static Action OnCloseMatch = () => { };
+
     public bool IsSearching { get; private set; } = false;
     public bool HasMatch { get; private set; } = false;
 
     public override void OnNetworkSpawn()
     {
-        // Singleton handle
         Instance = this;
-        if (OnSpawn != null) OnSpawn();
+        OnSpawn();
     }
 
     public override void OnNetworkDespawn()
     {
-        // Cleanup singleton
         Instance = null;
 
         // Handle clientside cleanup on despawn
-        if (!MultiplayerManager.instance.IsServer)
+        if (NetworkingClient.Instance != null)
         {
             Debug.Log("<- Matchmaker disconnected so cleanup");
             StopFindMatch();
