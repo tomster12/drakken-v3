@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class App : MonoBehaviour
@@ -7,20 +8,16 @@ public class App : MonoBehaviour
 
     private void Awake()
     {
-        if (CheckIsClient())
-        {
-            server.Close();
-            client.Init();
-        }
-        else
+        Config config = ConfigReader.ReadConfig();
+        if (config.IsServer)
         {
             client.Close();
             server.Init();
         }
-    }
-
-    private bool CheckIsClient()
-    {
-        return true;
+        else
+        {
+            server.Close();
+            client.Init();
+        }
     }
 }

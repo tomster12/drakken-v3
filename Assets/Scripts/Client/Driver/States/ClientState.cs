@@ -12,10 +12,10 @@ public abstract class ClientState
     public virtual void Update()
     { }
 
-    protected Client app;
-
-    protected ClientState(Client app)
+    public void Init(Client client)
     {
-        this.app = app;
+        this.client = client;
     }
+
+    protected Client client;
 }

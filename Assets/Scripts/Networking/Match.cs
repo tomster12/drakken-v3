@@ -49,7 +49,7 @@ public class Match : NetworkBehaviour
         // Remove this match from existence
         instance = null;
         OnSpawn = null;
-        Matchmaker.Instance.CallCloseMatch();
+        //Matchmaker.Instance.CallCloseMatch();
     }
 
     public void ReadyUp(Action callback)

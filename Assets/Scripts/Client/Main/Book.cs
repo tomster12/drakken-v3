@@ -4,39 +4,38 @@ using TMPro;
 
 public class Book : MonoBehaviour
 {
-    public float targetOpenAmount = 1.0f;
+    public bool toOpen = false;
+    public float openAmount = 1.0f;
+    public float openLerpSpeed = 1.0f;
+    public float openThreshold = 0.02f;
     public float glowAmount = 0.0f;
     public float glowLerpSpeed = 3.0f;
     public float outlineAmount = 0.0f;
-    public float openLerpSpeed = 1.0f;
-    public float openThreshold = 0.02f;
-    public bool toOpen;
+    public float outlineLerpSpeed = 3.0f;
 
     public Waypointer Waypointer => waypointer;
     public bool IsHovered { get; private set; }
     public bool IsOpen { get; private set; }
-    public float currentOpenPercent => currentOpenAmount / targetOpenAmount;
+    public float CurrentOpenPercent => currentOpenAmount / openAmount;
 
     public void LerpValues(bool set = false)
     {
         // Lerp book open amount
-        if (!set) currentOpenAmount = Mathf.Lerp(currentOpenAmount, toOpen ? targetOpenAmount : 0.0f, Time.deltaTime * openLerpSpeed);
-        else currentOpenAmount = toOpen ? targetOpenAmount : 0.0f;
+        if (!set) currentOpenAmount = Mathf.Lerp(currentOpenAmount, toOpen ? openAmount : 0.0f, Time.deltaTime * openLerpSpeed);
+        else currentOpenAmount = toOpen ? openAmount : 0.0f;
         animator.SetFloat("normalizedTime", currentOpenAmount);
-        IsOpen = toOpen && (1 - currentOpenPercent) < openThreshold;
+        IsOpen = toOpen && (1 - CurrentOpenPercent) < openThreshold;
 
-        // Lerp light intensities
-        foreach (Light light in lights)
+        // Lerp lerpers
+        foreach (LightLerper lerper in lightLerpers)
         {
-            if (!set) light.intensity = Mathf.Lerp(light.intensity, glowAmount * glowIntensity, Time.deltaTime * glowLerpSpeed);
-            else light.intensity = glowAmount * glowIntensity;
+            lerper.brightness = glowAmount;
+            lerper.lerpSpeed = glowLerpSpeed;
+            lerper.Lerp(set);
         }
-
-        // Lerp outline color
-        Color targetColor = outlineColor;
-        targetColor.a *= outlineAmount;
-        if (!set) outline.OutlineColor = Color.Lerp(outline.OutlineColor, targetColor, Time.deltaTime * outlineLerpSpeed);
-        else outline.OutlineColor = targetColor;
+        outlineLerper.amount = outlineAmount;
+        outlineLerper.lerpSpeed = outlineLerpSpeed;
+        outlineLerper.Lerp(set);
     }
 
     public void SetContentTitle(String text_) => contentTitleText.text = text_;
@@ -46,7 +45,8 @@ public class Book : MonoBehaviour
     [Header("References")]
     [SerializeField] private Outline outline;
     [SerializeField] private Animator animator;
-    [SerializeField] private Light[] lights;
+    [SerializeField] private LightLerper[] lightLerpers;
+    [SerializeField] private OutlineLerper outlineLerper;
     [SerializeField] private Waypointer waypointer;
 
     [Header("Content References")]
@@ -54,19 +54,13 @@ public class Book : MonoBehaviour
     [SerializeField] private TextMeshProUGUI contentTitleText;
     [SerializeField] private TextMeshProUGUI contentDescriptionText;
 
-    [Header("Config")]
-    [SerializeField] private float glowIntensity = 50.0f;
-    [SerializeField] private Color outlineColor = new Color(200.0f, 100.0f, 100.0f, 255.0f);
-    [SerializeField] private float outlineLerpSpeed = 3.0f;
-
     private float currentOpenAmount;
 
-    private void Start()
+    private void Awake()
     {
         Waypointer.Init(transform);
         SetContentTitle("");
         SetContentDescription("");
-        Waypointer.SetPlace("Default");
     }
 
     private void Update()

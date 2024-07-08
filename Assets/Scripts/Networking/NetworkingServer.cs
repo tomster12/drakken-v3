@@ -1,4 +1,3 @@
-using NUnit.Framework;
 using System;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
@@ -6,69 +5,34 @@ using UnityEngine;
 
 public class NetworkingServer : MonoBehaviour
 {
-    public static NetworkingServer Instance { get; private set; }
+    public Action<ulong> OnClientConnected = delegate { };
+    public Action<ulong> OnClientDisconnected = delegate { };
 
-    public bool IsConfigLoaded { get; private set; }
-    public bool IsStarted { get; private set; }
     public bool IsListening { get; private set; }
 
     public void Init()
     {
-        LoadConfig();
+        Config config = ConfigReader.ReadConfig();
+        networkTransport.SetConnectionData(config.Address, config.Port, config.ListenAddress);
+        networkTransport.OnTransportEvent += OnTransportEvent;
+        networkManager.OnClientConnectedCallback += (ulong clientID) => { OnClientConnected(clientID); };
+        networkManager.OnClientDisconnectCallback += (ulong clientID) => { OnClientDisconnected(clientID); };
     }
 
     public void StartListening()
     {
-        if (IsListening) throw new Exception("Already IsListening cannot StartListening().");
+        if (IsListening) throw new Exception("Already IsStarted or IsListening cannot StartListening().");
 
-        Debug.Log("Listening...");
-
-        networkManager.OnClientConnectedCallback += OnClientConnected;
-        networkManager.OnClientDisconnectCallback += OnClientDisconnect;
-        networkManager.StartServer();
-
-        GameObject matchmakerGO = Instantiate(matchmakerPrefab, Vector3.zero, Quaternion.identity);
-        matchmakerGO.GetComponent<NetworkObject>().Spawn();
-
-        IsListening = true;
+        IsListening = networkManager.StartServer();
+        if (!IsListening) throw new Exception("Could not StartServer()");
     }
 
+    [Header("References")]
     [SerializeField] private NetworkManager networkManager;
-    [SerializeField] private GameObject matchmakerPrefab;
+    [SerializeField] private UnityTransport networkTransport;
 
-    private void Awake()
+    private void OnTransportEvent(NetworkEvent eventType, ulong clientId, ArraySegment<byte> payload, float receiveTime)
     {
-        if (Instance != null) return;
-        Instance = this;
-    }
-
-    private void LoadConfig()
-    {
-        if (IsConfigLoaded) throw new Exception("Config already loaded.");
-        String path = Application.dataPath + "\\config.cfg";
-        System.IO.StreamReader reader = new System.IO.StreamReader(path);
-        UnityTransport unet = networkManager.GetComponent<UnityTransport>();
-        String address = reader.ReadLine();
-        String port = reader.ReadLine();
-        Assert.True(reader.ReadLine() == "1");
-        // isServer |= ParrelSync.ClonesManager.GetArgument() == "server";
-        // unet.ConnectAddress = address;
-        // unet.ConnectPort = int.Parse(port);
-        // unet.ServerListenPort = int.Parse(port);
-        reader.Close();
-        IsConfigLoaded = true;
-    }
-
-    private void OnClientConnected(ulong clientId)
-    {
-        // Client has connected to the server
-        Debug.Log("Client Connected: " + clientId);
-    }
-
-    private void OnClientDisconnect(ulong clientId)
-    {
-        // Stop matchmaking and close match
-        Debug.Log("Client Disconnected: " + clientId);
-        Matchmaker.Instance.OnClientDisconnect_Serverside(clientId);
+        Debug.Log(eventType);
     }
 }

@@ -1,92 +1,71 @@
-using NUnit.Framework;
 using System;
+using System.Threading.Tasks;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEngine;
 
 public class NetworkingClient : MonoBehaviour
 {
-    public static NetworkingClient Instance { get; private set; }
-    public static Action<bool> OnConnectResponse = (bool isConnected) => { };
-    public static Action OnDisconnect = () => { };
+    public Action OnConnect = () => { };
+    public Action OnDisconnect = () => { };
 
-    public bool IsConfigLoaded { get; private set; }
-    public bool IsConnecting { get; private set; } = false;
+    public enum ConnectionResponseType
+    { SUCCESS, FAILED_CONNECT, FAILED_START }
+
+    public bool IsStarted { get; private set; } = false;
     public bool IsConnected { get; private set; } = false;
 
     public void Init()
     {
-        LoadConfig();
+        Config config = ConfigReader.ReadConfig();
+        networkTransport.SetConnectionData(config.Address, config.Port);
+        networkTransport.OnTransportEvent += OnTransportEvent;
     }
 
-    public bool TryConnect()
+    public Task<ConnectionResponseType> StartConnection()
     {
-        if (!IsConfigLoaded) return false;
-        if (IsConnected) return false;
+        if (IsStarted || IsConnected) throw new Exception("Already IsStarted or IsConnected cannot TryConnect().");
 
-        // Connection starting, so listen out for matchmaker
-        IsConnecting = true;
-        Matchmaker.OnSpawn += CheckConnectionEstablished;
-
-        // Try start client, and fail early if cannot
-        if (!networkManager.StartClient())
+        var connectionTCS = new TaskCompletionSource<ConnectionResponseType>();
+        connectionResponse = (ConnectionResponseType res) =>
         {
-            IsConnecting = false;
-            OnConnectResponse(false);
-            Matchmaker.OnSpawn -= CheckConnectionEstablished;
-        }
+            connectionResponse = null;
+            connectionTCS.SetResult(res);
+        };
 
-        CheckConnectionEstablished();
-        return true;
+        IsStarted = networkManager.StartClient();
+
+        if (!IsStarted) connectionResponse(ConnectionResponseType.FAILED_START);
+
+        return connectionTCS.Task;
     }
 
-    public bool Disconnect()
+    public void Disconnect()
     {
-        if (!IsConnecting && !IsConnected) return false;
+        if (IsStarted || IsConnected) throw new Exception("Not IsStarted nor IsConnected so cannot Disconnect().");
 
         networkManager.Shutdown();
-        if (IsConnecting) OnConnectResponse(false);
-        IsConnecting = false;
-        if (IsConnected) OnDisconnect();
+        IsStarted = false;
         IsConnected = false;
-        return true;
     }
 
     [Header("References")]
     [SerializeField] private NetworkManager networkManager;
+    [SerializeField] private UnityTransport networkTransport;
 
-    private void Awake()
+    private Action<ConnectionResponseType> connectionResponse;
+
+    private void OnTransportEvent(NetworkEvent eventType, ulong clientId, ArraySegment<byte> payload, float receiveTime)
     {
-        if (Instance != null) return;
-        Instance = this;
-    }
-
-    private void LoadConfig()
-    {
-        if (IsConfigLoaded) throw new Exception("Config already loaded.");
-        String path = Application.dataPath + "\\config.cfg";
-        System.IO.StreamReader reader = new System.IO.StreamReader(path);
-        UnityTransport unet = networkManager.GetComponent<UnityTransport>();
-        String address = reader.ReadLine();
-        String port = reader.ReadLine();
-        Assert.True(reader.ReadLine() != "1");
-        // isServer |= ParrelSync.ClonesManager.GetArgument() == "server";
-        // unet.ConnectAddress = address;
-        // unet.ConnectPort = int.Parse(port);
-        // unet.ServerListenPort = int.Parse(port);
-        reader.Close();
-        IsConfigLoaded = true;
-    }
-
-    private void CheckConnectionEstablished()
-    {
-        if (!IsConnecting) return;
-
-        // Matchmaker can only exist when connected
-        if (Matchmaker.Instance == null) return;
-
-        IsConnecting = false;
-        IsConnected = true;
-        OnConnectResponse(true);
+        if (eventType == NetworkEvent.Connect)
+        {
+            connectionResponse?.Invoke(ConnectionResponseType.SUCCESS);
+            OnConnect();
+        }
+        else if (eventType == NetworkEvent.Disconnect)
+        {
+            connectionResponse?.Invoke(ConnectionResponseType.FAILED_CONNECT);
+            OnDisconnect();
+        }
     }
 }

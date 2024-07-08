@@ -31,12 +31,7 @@ public class CameraController : MonoBehaviour
         Instance = this;
 
         cam.depthTextureMode = DepthTextureMode.Depth;
-    }
-
-    private void Start()
-    {
         Waypointer.Init(transform);
-        Waypointer.SetPlace("Default", true);
     }
 
     private void Update()

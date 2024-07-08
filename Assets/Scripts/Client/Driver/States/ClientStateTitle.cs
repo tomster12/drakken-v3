@@ -2,113 +2,101 @@
 using System.Collections;
 using UnityEngine;
 
-// TODO: Cleanup
 [Serializable]
 public class ClientStateTitle : ClientState
 {
-    public ClientStateTitle(Client app) : base(app)
-    {
-    }
-
-    public void SetToBase()
-    {
-        app.CameraController.Waypointer.SetPlace(camPlace, true);
-        app.Book.Waypointer.SetPlace(bookPlace, true);
-        ResetValues();
-        app.Fire.LerpValues(true);
-        app.Book.LerpValues(true);
-        app.Book.LerpValues(true); // TODO: Is this needed?
-
-        // Start fade - assume title existing
-        isTitleFaded = false;
-    }
-
     public override void Set()
     {
-        app.CameraController.Waypointer.SetPlace(camPlace);
-        app.Book.Waypointer.SetPlace(bookPlace);
-        ResetValues();
+        cameraController.Waypointer.positionLerpSpeed = camLerpSpeed;
+        book.toOpen = false;
+        book.outlineAmount = 0.0f;
+        book.glowAmount = 0.0f;
+        book.glowLerpSpeed = bookGlowLerpSpeed;
+        book.openLerpSpeed = bookOpenLerpSpeed;
+        fire.brightness = 0.0f;
+        fire.lerpSpeed = fireBrightnessLerpSpeed;
+        isHovered = false;
+        isOpening = false;
+
+        if (firstTime)
+        {
+            cameraController.Waypointer.SetPlace(camPlace, true, true);
+            book.Waypointer.SetPlace(bookPlace, true, true);
+            fire.LerpValues(true);
+            book.LerpValues(true);
+            isTitleFaded = false;
+            firstTime = false;
+        }
+        else
+        {
+            cameraController.Waypointer.SetPlace(camPlace);
+            book.Waypointer.SetPlace(bookPlace);
+        }
     }
 
     public override void Update()
     {
         if (isOpening) return;
 
-        // Check if hovered
         isHovered = (Input.mousePosition.y / Screen.height) < 0.2f;
 
-        // Handle neutral
         if (!isHovered)
         {
-            app.Book.outlineAmount = 0.0f;
-            app.Book.glowAmount = 0.0f;
-            app.Fire.brightness = neutralFireBrightness;
+            book.outlineAmount = 0.0f;
+            book.glowAmount = 0.0f;
+            fire.brightness = fireBrightnessNeutral;
         }
-
-        // Handle book hovered
         else
         {
-            app.Book.outlineAmount = hoveredBookOutlineAmount;
-            app.Book.glowAmount = hoveredBookGlowAmount;
-            app.Fire.brightness = hoveredFireBrightness;
+            book.outlineAmount = bookOutlineHovered;
+            book.glowAmount = bookGlowHovered;
+            fire.brightness = fireBrightnessHovered;
 
-            // Transition on mouse click
             if (Input.GetMouseButtonDown(0)) GotoNext();
         }
     }
 
-    private const string camPlace = "Default";
-    private const string bookPlace = "Default";
-    private const float camLerpSpeed = 2.0f;
-    private const float bookOpenLerpSpeed = 3.0f;
-    private const float bookGlowLerpSpeed = 3.0f;
-    private const float neutralFireBrightness = 0.01f;
-    private const float hoveredFireBrightness = 0.09f;
-    private const float hoveredBookOutlineAmount = 1.0f;
-    private const float hoveredBookGlowAmount = 0.7f;
-    private const float openingBookGlowAmount = 1.5f;
-    private const float openingFireBrightness = 0.13f;
+    [Header("References")]
+    [SerializeField] private CameraController cameraController;
+    [SerializeField] private Book book;
+    [SerializeField] private Fire fire;
+    [SerializeField] private Fizzler titleFizzler;
 
-    private bool isTitleFaded;
-    private bool isHovered;
-    private bool isOpening;
+    [Header("Config")]
+    [SerializeField] private string camPlace = "Default";
+    [SerializeField] private float camLerpSpeed = 2.0f;
+    [SerializeField] private string bookPlace = "Default";
+    [SerializeField] private float bookOpenLerpSpeed = 3.0f;
+    [SerializeField] private float bookGlowLerpSpeed = 3.0f;
+    [SerializeField] private float bookOutlineHovered = 1.0f;
+    [SerializeField] private float bookGlowHovered = 0.7f;
+    [SerializeField] private float bookGlowOpening = 1.5f;
+    [SerializeField] private float fireBrightnessLerpSpeed = 3.0f;
+    [SerializeField] private float fireBrightnessNeutral = 0.01f;
+    [SerializeField] private float fireBrightnessHovered = 0.09f;
+    [SerializeField] private float fireBrightnessOpening = 0.13f;
 
-    private void ResetValues()
-    {
-        // Reset all component values to base level
-        app.Book.glowLerpSpeed = bookGlowLerpSpeed;
-        app.CameraController.Waypointer.positionlerpSpeed = camLerpSpeed;
-        app.Book.openLerpSpeed = bookOpenLerpSpeed;
-        app.Book.outlineAmount = 0.0f;
-        app.Book.glowAmount = 0.0f;
-        app.Book.toOpen = false;
-        app.Fire.brightness = 0.0f;
-        isHovered = false;
-        isOpening = false;
-    }
+    private bool isTitleFaded = false;
+    private bool isHovered = false;
+    private bool isOpening = false;
+    private bool firstTime = true;
 
-    private void GotoNext() => app.StartCoroutine(GotoNextIE());
+    private void GotoNext() => client.StartCoroutine(GotoNextIE());
 
     private IEnumerator GotoNextIE()
     {
-        // Set values, fade title, wait, then transition
+        if (isOpening) throw new Exception("Cannot GotoNext already isOpening");
+
         isOpening = true;
-        app.Book.glowAmount = openingBookGlowAmount;
-        app.Fire.brightness = openingFireBrightness;
+        book.glowAmount = bookGlowOpening;
+        fire.brightness = fireBrightnessOpening;
         if (!isTitleFaded)
         {
-            FadeTitle();
-            yield return new WaitForSeconds(0.8f);
+            titleFizzler.StartFizzle();
+            yield return new WaitForSeconds(0.4f);
+            isTitleFaded = true;
         }
-        app.SetAppState(Client.StateType.MENU);
-    }
 
-    private void FadeTitle()
-    {
-        if (isTitleFaded) return;
-
-        // Fade title text - should only happen once
-        isTitleFaded = true;
-        //titleFizzler.StartFizzle(); TODO
+        client.SetState(Client.StateType.MENU);
     }
 }

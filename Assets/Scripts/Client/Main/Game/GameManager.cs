@@ -103,7 +103,7 @@ public class GameManager : MonoBehaviour
         else cameraController.Waypointer.SetPlace("Default");
 
         // Leave on space
-        if (Input.GetKeyDown(KeyCode.Space)) Matchmaker.Instance.TryLeaveMatchmaking();
+        //if (Input.GetKeyDown(KeyCode.Space)) Matchmaker.Instance.TryLeaveMatchmaking();
     }
 
     private void RollDice(int count, bool reset = true) => StartCoroutine(RollDiceIE(count, reset));

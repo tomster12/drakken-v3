@@ -5,17 +5,17 @@ using UnityEngine;
 
 public class Matchmaker : NetworkBehaviour
 {
-    public static Matchmaker Instance { get; private set; }
     public static Action OnSpawn = () => { };
     public static Action<bool> OnFindMatch = (bool found) => { };
     public static Action OnCloseMatch = () => { };
-
+    public static Matchmaker Instance { get; private set; }
     public bool IsSearching { get; private set; } = false;
     public bool HasMatch { get; private set; } = false;
 
     public override void OnNetworkSpawn()
     {
         Instance = this;
+        Debug.Log("Matchmaker Spawned.");
         OnSpawn();
     }
 
@@ -23,14 +23,15 @@ public class Matchmaker : NetworkBehaviour
     {
         Instance = null;
 
-        // Handle clientside cleanup on despawn
-        if (NetworkingClient.Instance != null)
-        {
-            Debug.Log("<- Matchmaker disconnected so cleanup");
-            StopFindMatch();
-            CallCloseMatch();
-        }
+        //if (NetworkingClient.Instance != null)
+        //{
+        //Debug.Log("<- Matchmaker disconnected so cleanup");
+        //StopFindMatch();
+        //CallCloseMatch();
+        //}
     }
+
+    /*
 
     public void OnClientDisconnect_Serverside(ulong clientId) => TryLeaveMatchmaking_Serverside(clientId);
 
@@ -206,4 +207,6 @@ public class Matchmaker : NetworkBehaviour
     }
 
     #endregion Server
+
+    */
 }

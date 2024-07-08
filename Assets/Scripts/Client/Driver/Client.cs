@@ -6,22 +6,19 @@ public class Client : MonoBehaviour
     public enum StateType
     { TITLE, MENU, MATCHMAKING, LOBBY, INGAME };
 
-    public static Client Instance { get; private set; }
     public NetworkingClient NetworkingClient => networkingClient;
-    public CameraController CameraController => cameraController;
-    public Fire Fire => fire;
-    public Book Book => book;
 
     public void Init()
     {
-        states[StateType.TITLE] = new ClientStateTitle(this);
-        states[StateType.MENU] = new ClientStateTitle(this);
-        states[StateType.MATCHMAKING] = new ClientStateTitle(this);
-        states[StateType.LOBBY] = new ClientStateTitle(this);
-        states[StateType.INGAME] = new ClientStateTitle(this);
+        states = new Dictionary<StateType, ClientState>();
+        states[StateType.TITLE] = stateTitle;
+        states[StateType.MENU] = stateMenu;
+        states[StateType.MATCHMAKING] = stateMatchmaking;
+        states[StateType.LOBBY] = stateLobby;
+        states[StateType.INGAME] = stateIngame;
+        foreach (var state in states) state.Value.Init(this);
 
         networkingClient.Init();
-        SetAppState(StateType.TITLE);
     }
 
     public void Close()
@@ -29,31 +26,31 @@ public class Client : MonoBehaviour
         DestroyImmediate(clientRoot.gameObject);
     }
 
-    public void SetAppState(StateType stateType)
+    public void SetState(StateType stateType)
     {
         currentState?.Unset();
         currentState = states[stateType];
         currentState.Set();
     }
 
+    [Header("States")]
+    [SerializeField] private ClientStateTitle stateTitle;
+    [SerializeField] private ClientStateMenu stateMenu;
+    [SerializeField] private ClientStateMatchmaking stateMatchmaking;
+    [SerializeField] private ClientStateLobby stateLobby;
+    [SerializeField] private ClientStateIngame stateIngame;
+
     [Header("References")]
     [SerializeField] private Transform clientRoot;
     [SerializeField] private NetworkingClient networkingClient;
-    [SerializeField] private CameraController cameraController;
-    [SerializeField] private Fire fire;
-    [SerializeField] private Book book;
 
-    private Dictionary<StateType, ClientState> states = new();
+    private Dictionary<StateType, ClientState> states;
     private ClientState currentState;
 
-    private void Awake()
+    private void Start()
     {
-        if (Instance != null) return;
-        Instance = this;
+        SetState(StateType.TITLE);
     }
 
-    private void Update()
-    {
-        currentState?.Update();
-    }
+    private void Update() => currentState?.Update();
 }

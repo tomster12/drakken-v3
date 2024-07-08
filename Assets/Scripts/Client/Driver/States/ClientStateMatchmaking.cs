@@ -1,9 +1,13 @@
 ﻿using System;
+using UnityEngine;
 
 [Serializable]
 public class ClientStateMatchmaking : ClientState
 {
-    public ClientStateMatchmaking(Client app) : base(app)
+    public override async void Set()
     {
+        Debug.Log("Calling to Connect.");
+        var task = client.NetworkingClient.StartConnection();
+        Debug.Log("Connection Response: " + await task);
     }
 }

@@ -2,10 +2,10 @@ using UnityEngine;
 
 public class VisualToken : MonoBehaviour
 {
-    [SerializeField] public Lerper lerper;
+    [SerializeField] public PointLerper lerper;
     [SerializeField] public Fizzler fizzler;
 
-    public Lerper Lerper => lerper;
+    public PointLerper Lerper => lerper;
     public Fizzler Fizzler => fizzler;
     public ClassData OptionClass { get; private set; }
     public bool IsActive { get; private set; } = false;
